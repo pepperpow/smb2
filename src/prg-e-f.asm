@@ -4594,7 +4594,9 @@ ReadJoypadLoop:
 
 	RTS
 
-
+IFDEF HEALTH_REVAMP
+	.include "src/extras/health-revamp-3.asm"
+ENDIF
 ;
 ; Load the area specified by the area pointer at the current page
 ;

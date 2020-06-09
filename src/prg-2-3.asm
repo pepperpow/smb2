@@ -10677,6 +10677,26 @@ CheckCollisionWithPlayer:
 	STA EnemyState, Y
 	LDA #SoundEffect1_CherryGet
 	STA SoundEffectQueue1
+IFDEF HEALTH_REVAMP
+    LDA PlayerMaxHealth
+    BMI +
+    LDA PlayerHealth
+    ADC #$10
+    STA PlayerHealth
+    LDA PlayerMaxHealth
+    ASL
+    ASL
+    ASL
+    ASL
+    CLC
+    ADC #$1F
+    CMP PlayerHealth
+    BCS +
+    STA PlayerHealth
++
+    JMP CheckCollisionWithPlayer_Exit
+ENDIF
+IFNDEF HEALTH_REVAMP
 	LDY PlayerMaxHealth
 	LDA PlayerHealth
 	CLC
@@ -10686,6 +10706,7 @@ CheckCollisionWithPlayer:
 	BCC CheckCollisionWithPlayer_Exit
 
 	JMP RestorePlayerToFullHealth
+ENDIF
 
 ; ---------------------------------------------------------------------------
 
@@ -12103,9 +12124,34 @@ AreaSecondaryRoutine_HealthBar_Draw:
 
 	LDA #$FE
 	STA byte_RAM_3
+IFDEF HEALTH_REVAMP
+    LDA PlayerMaxHealth
+    BMI AreaSecondaryRoutine_POW
+    CMP #$3
+    BCC +
+    JSR NewHealthRender
+    JMP AreaSecondaryRoutine_POW
++   TXA
+    CMP #$10
+    BCC +
+    LDA #$10
+    TAX
++
+;    PHA
+;    LDA PlayerHealth
+;    BEQ ++
+;    LDX ProjectileType
+;	LDA ProjectileTileHealth, X
+;	STA SpriteDMAArea + 1, Y
+;    PLA
+;    TAX
+;    JMP +++
+;++  PLA
+ENDIF
 AreaSecondaryRoutine_HealthBar_Loop:
 	LDA HealthBarTiles, X
 	STA SpriteDMAArea + 1, Y
+AfterLoadHealthTile:
 	LDA #$10
 	STA SpriteDMAArea + 3, Y
 	LDA #$01
@@ -12122,11 +12168,21 @@ AreaSecondaryRoutine_HealthBar_Loop:
 	INY
 	INC byte_RAM_3
 	LDA byte_RAM_3
+IFDEF HEALTH_REVAMP
+	CMP #2
+	BEQ AreaSecondaryRoutine_POW
+ENDIF
 	CMP PlayerMaxHealth
 	BNE AreaSecondaryRoutine_HealthBar_Loop
 
 AreaSecondaryRoutine_POW:
 	LDA POWQuakeTimer
+IFDEF HEALTH_REVAMP ;; actually deals with groundpound?
+    BPL +++ 
+    INC POWQuakeTimer
+    INC POWQuakeTimer
++++
+ENDIF
 	BEQ AreaSecondaryRoutine_Exit
 
 	DEC POWQuakeTimer
