@@ -8034,3 +8034,9 @@ DebugRandomObject:
 	STA CreateObjectType
 	RTS
 ENDIF
+
+IFDEF MIGRATE_PLAYER_RENDER
+
+.include "src/systems/render-player.asm"
+
+ENDIF
