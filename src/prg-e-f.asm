@@ -3153,6 +3153,15 @@ RunFrame_Vertical:
 	CMP #Music2_BossClearFanfare
 	BEQ RunFrame_Vertical_AfterPlayerState
 
+IFDEF SCROLL_FIX
+    LDA NeedsScroll
+    BNE +
+    LDA DoorAnimationTimer
+    BNE +
+    STA PlayerLock
+    +
+ENDIF
+
 	LDA PlayerLock
 	BNE RunFrame_Vertical_AfterPlayerState
 
@@ -5122,6 +5131,60 @@ loc_BANKF_F749:
 ;
 ; Copies the raw level data to memory.
 ;
+IFDEF CUSTOM_LEVEL_RLE
+LoadLevelIntoMemoly_NoBank:
+	; Determine the global area index from the current level and area.
+	LDY CurrentLevel
+	LDA LevelAreaStartIndexes, Y
+	CLC
+	ADC CurrentLevelArea
+	TAY
+
+	; Calculate the pointer for the start of the level data.
+	LDA LevelDataPointersHi, Y
+	STA byte_RAM_8
+	LDA LevelDataPointersLo, Y
+	STA byte_RAM_7
+	LDA LevelDataBank, Y
+	STA byte_RAM_9
+	RTS
+LoadLevelDataPtrIntoMemoly:
+	LDA #PRGBank_8_9
+	JSR ChangeMappedPRGBank
+	JSR LoadLevelIntoMemoly_NoBank
+	LDA #PRGBank_6_7
+	JSR ChangeMappedPRGBank
+	RTS
+CopyLevelDataMemory_Switch:
+	DEY
+	DEY
+	DEY
+	CLC
+	TYA
+	ADC byte_RAM_7
+	BCC ++
+	INC byte_RAM_8
+	++
+	STA byte_RAM_7
+
+	LDA byte_RAM_9
+	JSR ChangeMappedPRGBank
+
+	; Blindly copy 255 bytes of data, which is presumed to contain the full area.
+	LDY #$4
+	LDX #$FB
+	-
+	LDA (byte_RAM_7), Y
+	STA (byte_RAM_5), Y
+	INY
+	DEX
+	BNE -
+	LDA #PRGBank_6_7
+	JSR ChangeMappedPRGBank
+	LDY #$4
+	STY byte_RAM_4
+	RTS
+ENDIF
 CopyLevelDataToMemory:
 	; Determine the global area index from the current level and area.
 	LDY CurrentLevel
@@ -5135,6 +5198,10 @@ CopyLevelDataToMemory:
 	STA byte_RAM_5
 	LDA LevelDataPointersHi, Y
 	STA byte_RAM_6
+IFDEF CUSTOM_LEVEL_RLE
+	LDA LevelDataBank, Y
+	JSR ChangeMappedPRGBank
+ENDIF
 
 	; Blindly copy 255 bytes of data, which is presumed to contain the full area.
 	LDX #$FF
@@ -5161,6 +5228,10 @@ CopyLevelDataToMemory_Loop:
 ; Copies the raw enemy data to memory.
 ;
 CopyEnemyDataToMemory:
+IFDEF CUSTOM_LEVEL_RLE
+	LDA #PRGBank_8_9
+	JSR ChangeMappedPRGBank
+ENDIF
 	; Determine the address of the level's enemy pointer tables.
 	LDY CurrentLevel
 	LDA EnemyPointersByLevel_HiHi, Y

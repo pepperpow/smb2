@@ -70,16 +70,16 @@ PRESERVE_UNUSED_SPACE = 1
 
 
 ; Show all 8 frames of CHR cycling animation
-; FIX_CHR_CYCLE = 1
+FIX_CHR_CYCLE = 1
 
 ; Fixes the POW falling log glitch
-; FIX_POW_LOG_GLITCH = 1
+FIX_POW_LOG_GLITCH = 1
 
 ; Fixes vine climbing bug when holding up and down simultaneously
-; FIX_CLIMB_ZIP = 1
+FIX_CLIMB_ZIP = 1
 
 ; Fixes green platform tiles in Subspace
-; FIX_SUBSPACE_TILES = 1
+FIX_SUBSPACE_TILES = 1
 
 
 ; ----------------------------------------
@@ -118,8 +118,8 @@ PRESERVE_UNUSED_SPACE = 1
 
 
 ; Expand PRG and/or CHR to max capacity
-; EXPAND_PRG = 1
-; EXPAND_CHR = 1
+EXPAND_PRG = 1
+EXPAND_CHR = 1
 
 ; Use MMC5 (mapper 5) instead of MMC3 (mapper 4)
 ; Based on RetroRain's MMC5 patch (https://www.romhacking.net/hacks/2568)
@@ -141,7 +141,7 @@ PRESERVE_UNUSED_SPACE = 1
 ; EXPAND_MUSIC = 1
 
 ; Encode world tileset in unused 3 bits of area header byte 2
-; AREA_HEADER_TILESET = 1
+AREA_HEADER_TILESET = 1
 
 ; Checks the CHR latch variable to reload the CHR data
 ; RESET_CHR_LATCH = 1
@@ -162,7 +162,10 @@ PRESERVE_UNUSED_SPACE = 1
 ; DISABLE_DOOR_POINTERS = 1
 
 ; Enables full-page door/vine searching so that entrances don't need to align
-; ROBUST_TRANSITION_SEARCH = 1
+ROBUST_TRANSITION_SEARCH = 1
 
+JUMP_THROW_FIX = 1
+
+CUSTOM_LEVEL_RLE = 1
 
 .endinl

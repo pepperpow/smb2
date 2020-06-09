@@ -2555,9 +2555,16 @@ PlayerStartJump_CheckXSpeed:
 	CPY #$3C
 	BCC PlayerStartJump_SetYVelocity
 
-	; Clear Player1JoypadHeld for a crouch jump
+IFDEF JUMP_THROW_FIX
+    LDA #$F0 ;; thx smb2 improvement patch (spiderdave) 
+    AND Player1JoypadHeld
+    STA Player1JoypadHeld
+    LDA #$0
+ENDIF
+IFNDEF JUMP_THROW_FIX
 	LDA #$00
 	STA Player1JoypadHeld
+ENDIF
 
 PlayerStartJump_SetYVelocity:
 	; Set bit for charged jump using carry flag
