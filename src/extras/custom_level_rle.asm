@@ -343,6 +343,20 @@ LdTilesToRam_Last:
 	STA byte_RAM_50E
 	RTS
 
+ConvertTilesIf:
+	LDX #$32
+	--
+	LDA $6B01, X
+	CMP #BackgroundTile_DoorBottomLock
+	BNE +
+	LDA #BackgroundTile_DoorBottom
+	STA $6B01, X
+	+
+	DEX
+	BNE --
+	RTS
+	
+
 LdDimensions:
 	LDX #$0
 	LDY byte_RAM_4

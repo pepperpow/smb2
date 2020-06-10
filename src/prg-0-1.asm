@@ -3615,6 +3615,19 @@ loc_BANK0_90C5:
 	CMP #Enemy_Mushroom1up
 	BNE loc_BANK0_90D5
 
+IFDEF LEVEL_FLAGS
+    TXA
+    PHA
+    LDX #CustomBitFlag_1up 
+    JSR ApplyFlagLevel
+    BEQ +
+    INC Level_Count_1ups
+    DEC Mushroom1upPulled
++   INC Mushroom1upPulled 
+    PLA
+    TAX
+ENDIF
+
 	LDA Mushroom1upPulled
 	BEQ loc_BANK0_90EA
 
@@ -3910,6 +3923,14 @@ DoorHandling_Exit:
 
 
 DoorHandling_LockedDoor:
+IFDEF LOCKED_DOOR
+    LDX #CustomBitFlag_MasterKey
+    LDA #$0
+    JSR ChkFlagPlayer2
+    BNE +
+    JMP SetFlagUnlock  ;; still need to have an object to set ?
++
+ENDIF
 	LDA HoldingItem
 	; don't come to a locked door empty-handed
 	BEQ DoorHandling_Exit
@@ -3922,6 +3943,16 @@ DoorHandling_LockedDoor:
 
 	; the key has been used
 	INC KeyUsed
+SetFlagUnlock:
+IFDEF LOCKED_DOOR
+    TYA
+    PHA
+    LDX #CustomBitFlag_Key 
+    JSR ApplyFlagLevel
+    INC Level_Count_Unlocks
+    PLA
+    TAY
+ENDIF
 	TYA
 	TAX
 
@@ -4467,6 +4498,15 @@ ApplyAreaTransition_MoveCamera:
 ; Do the player placement after an area transition
 ;
 AreaTransitionPlacement:
+IFDEF LEVEL_FLAGS
+    LDX #CustomBitFlag_Visited
+    JSR ApplyFlagLevel
+    BEQ +
+	LDX CurrentCharacter
+	INC CharacterLevelsCompleted, X
+    INC Level_Count_Discovery
++
+ENDIF
 	LDA TransitionType
 	JSR JumpToTableAfterJump
 

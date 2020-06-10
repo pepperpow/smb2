@@ -1249,6 +1249,17 @@ loc_BANKF_E61A:
 
 	INC SubspaceVisits
 
+IFDEF LEVEL_FLAGS ;; this activates _every_ transition??
+    INC Level_Count_SubspaceVisits
+    LDX #CustomBitFlag_Sub1
+    JSR ApplyFlagLevel
+    BNE +
+    LDX #CustomBitFlag_Sub2
+    JSR ApplyFlagLevel 
+    BNE +
++   
+ENDIF
+
 loc_BANKF_E627:
 	LDA CurrentLevelAreaCopy
 	STA CurrentLevelArea
@@ -3363,6 +3374,26 @@ SetPlayerScreenPosition:
 SetPlayerScreenPosition_Below:
 	LDA #$00
 	STA PlayerStateTimer
+IFDEF FALL_DEFENSE
+    LDX #CustomBitFlag_FallDefense
+    JSR ChkFlagPlayer
+    BNE +
+    LDA #$80
+    STA PlayerYVelocity
+    LDA #SoundEffect1_EnemyHit
+    STA SoundEffectQueue1
+    LDA #PRGBank_2_3
+    JSR ChangeMappedPRGBank
+IFDEF DAMAGE_RESIST
+    JSR DamagePlayerNoImmune
+ELSE
+	JSR DamagePlayer
+ENDIF
+    LDA #PRGBank_0_1
+    JSR ChangeMappedPRGBank
+    JMP SetPlayerScreenPosition_Above
++
+ENDIF
 	JMP KillPlayer
 
 ; If the player is above the screen, they might be jumping out of a jar.

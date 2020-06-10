@@ -178,6 +178,8 @@ HEALTH_REVAMP = 1
 
 .include "src/extras/player-defines.asm"
 
+FALL_DEFENSE = 1
+
 PLAYER_STUFF_TITLE = 1
 
 SMALL_HITBOX = 1
@@ -189,5 +191,11 @@ CUSTOM_TILE_IDS = 1
 DEBUG = 1
 
 FLAG_SYSTEM = 1
+
+LEVEL_FLAGS = 1
+
+DAMAGE_RESIST = 1
+
+LOCKED_DOOR = 1
 
 .endinl

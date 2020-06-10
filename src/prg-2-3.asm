@@ -78,6 +78,21 @@ IFDEF TRANSITION_INVULN
     STA AreaTransitioned_Invuln
 +
 ENDIF 
+IFDEF LEVEL_FLAGS
+    TXA
+    PHA
+    LDX #CustomBitFlag_Crystal
+    JSR ChkFlagLevel
+    BNE +
+    INC CrystalAndHawkmouthOpenSize
++   LDX #CustomBitFlag_Sub2
+    JSR ChkFlagLevel 
+    BNE +
+    LDA #2
+    STA SubspaceVisits
++   PLA
+    TAX
+ENDIF
 
 IFDEF RESET_CHR_LATCH
 	LDY #$FF
@@ -782,6 +797,26 @@ CheckObjectSpawnBoundaries_InitializePage_SetObjectType:
 	TYA
 	STA EnemyRawDataOffset, X
 	INC EnemyState, X
+IFDEF LEVEL_FLAGS
+	LDA EnemyArray_SpawnsDoor, X
+    BEQ ++
+;    JSR Set_CustomBossHp
+	LDA ObjectXHi, X
+	STA unk_RAM_4EF, X
+    TXA
+    PHA
+    LDX #CustomBitFlag_Boss_Defeated 
+    JSR ChkFlagWorld
+    BNE +
+    PLA
+    TAX
+    INC EnemyState, X
+    JMP ++
++   PLA
+    TAX
+++
+    ;;hotspot location here (but what would it do)
+ENDIF
 	LDA ObjectType, X
 
 InitializeEnemy:
@@ -1050,6 +1085,13 @@ loc_BANK2_852D:
 	LDA #%01000001
 	STA ObjectAttributes, X
 	STA EnemyArray_46E, X
+IFDEF LEVEL_FLAGS
+     LDX #CustomBitFlag_Boss_Defeated 
+     JSR ApplyFlagWorld
+     BEQ +
+     INC World_Count_Bosses
+ +
+ENDIF
 	JMP TurnIntoPuffOfSmoke
 
 ; ---------------------------------------------------------------------------
@@ -3324,6 +3366,17 @@ EnemyBehavior_Mushroom_PickUp:
 	BNE EnemyBehavior_PickUpNotCrystalBall
 
 	LDA CrystalAndHawkmouthOpenSize
+IFDEF LEVEL_FLAGS
+    TXA
+    PHA
+    LDX #CustomBitFlag_Crystal
+    JSR ApplyFlagLevel
+    BEQ +
+    INC Level_Count_Crystals
++
+    PLA
+    TAX
+ENDIF
 	BNE EnemyBehavior_CrystalBall_Exit
 
 	LDA #Music2_CrystalGetFanfare
@@ -11135,6 +11188,9 @@ locret_BANK3_B9F9:
 ; ---------------------------------------------------------------------------
 
 DamagePlayer:
+IFDEF DAMAGE_RESIST
+	.include "src/extras/damage-resist.asm"
+ENDIF
 	LDA DamageInvulnTime
 	BNE locret_BANK3_BA31
 

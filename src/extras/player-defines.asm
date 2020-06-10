@@ -1,4 +1,4 @@
-AreaTransitioned_Invuln = $7300
+AreaTransitioned_Invuln = $7603
 
 PlayerLevelPowerup_1 = $7600
 PlayerLevelPowerup_2 = $7601
