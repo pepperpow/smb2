@@ -67,6 +67,17 @@ AreaInitialization:
 	STA JumpFloatTimer
 	STA QuicksandDepth
 	STA BossBeaten
+IFDEF FLAG_SYSTEM
+    STA SubspaceVisits
+ENDIF
+IFDEF TRANSITION_INVULN
+    LDA TransitionType
+    CMP #TransitionType_SubSpace
+    BEQ +
+    LDA #$10
+    STA AreaTransitioned_Invuln
++
+ENDIF 
 
 IFDEF RESET_CHR_LATCH
 	LDY #$FF
@@ -5080,7 +5091,12 @@ EnemyBehavior_Shell:
 EnemyBehavior_Shell_Destroy:
 	LDA #SoundEffect1_EnemyHit
 	STA SoundEffectQueue1
+IFNDEF SHELL_FIX
 	JMP TurnIntoPuffOfSmoke
+ENDIF
+IFDEF SHELL_FIX
+	JSR EnemyBehavior_TurnAround
+ENDIF
 
 
 EnemyBehavior_Shell_Slide:
@@ -5094,6 +5110,17 @@ EnemyBehavior_Shell_Render:
 	JSR RenderSprite
 
 	LDY EnemyMovementDirection, X
+IFDEF SHELL_FIX
+    LDA ObjectXVelocity, X
+    BEQ +
+    JMP ApplyObjectMovement
++
+    LDA ObjectType, X
+    CMP #Enemy_Shell
+    BNE ++
+    JMP ApplyObjectMovement
+++
+ENDIF
 	LDA ShellSpeed - 1, Y
 	STA ObjectXVelocity, X
 	JMP ApplyObjectMovement
@@ -11549,6 +11576,12 @@ loc_BANK3_BBDD:
 ;   C = whether or not collision type Y is relevant
 ;
 CheckTileUsesCollisionType_Bank3:
+IFDEF CUSTOM_TILE_IDS
+	CMP #$D8
+	BCC +
+	JSR CheckCustomSolidness
+	+
+ENDIF
 	PHA ; stash tile ID for later
 
 	; determine which tile table to use (0-3)

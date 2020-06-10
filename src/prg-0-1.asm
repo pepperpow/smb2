@@ -717,6 +717,23 @@ CopyBackgroundToPPUBuffer_Vertical:
 CopyBackgroundToPPUBuffer_Vertical_Loop:
 	LDY ReadLevelDataOffset
 	LDA (ReadLevelDataAddress), Y
+	IFDEF CUSTOM_TILE_IDS
+	CMP #$D8
+	BCC +
+	STX byte_RAM_300
+	JSR CheckCustomSolidness
+	LDA (ReadLevelDataAddress), Y
+	LDX byte_RAM_300
+	SBC #$D8
+	ASL
+	ASL
+	STA byte_RAM_0
+	LDA #$77
+	STA byte_RAM_1
+	LDY #$0
+	JMP ++
+	+
+	ENDIF
 	STA DrawTileId
 	AND #%11000000
 	ASL A
@@ -733,6 +750,7 @@ CopyBackgroundToPPUBuffer_Vertical_Loop:
 	ASL A
 	ASL A
 	TAY
+	++
 	LDA byte_RAM_D5
 	BEQ loc_BANK0_8390
 
@@ -1726,6 +1744,22 @@ CopyBackgroundToPPUBuffer_Horizontal:
 CopyBackgroundToPPUBuffer_Horizontal_Loop:
 	LDY ReadLevelDataOffset
 	LDA (ReadLevelDataAddress), Y
+IFDEF CUSTOM_TILE_IDS
+	CMP #$D8
+	BCC +
+	JSR CheckCustomSolidness
+	LDA (ReadLevelDataAddress), Y
+	SBC #$D8
+	ASL
+	ASL
+	STA byte_RAM_0
+	LDA #$77
+	STA byte_RAM_1
+	LDY #$0
+	JMP ++
+	+
+ENDIF
+
 	STA DrawTileId
 	AND #%11000000
 	ASL A
@@ -1743,6 +1777,7 @@ CopyBackgroundToPPUBuffer_Horizontal_Loop:
 	ASL A
 	ASL A
 	TAY
+	++
 	LDA byte_RAM_D5
 	BEQ loc_BANK0_88A0
 
@@ -3119,6 +3154,9 @@ PlayerTileCollision:
 
 	; Determine bounding box lookup index
 	LDA PlayerDucking
+IFDEF SMALL_HITBOX
+	ORA PlayerCurrentSize
+ENDIF
 	ASL A
 	ORA HoldingItem
 	TAX
@@ -3473,6 +3511,12 @@ PlayerTileCollision_Climbable_Exit:
 ;   C = whether or not collision type Y is relevant
 ;
 CheckTileUsesCollisionType:
+IFDEF CUSTOM_TILE_IDS
+	CMP #$D8
+	BCC +
+	JSR CheckCustomSolidness
+	+
+ENDIF
 	PHA ; stash tile ID for later
 
 	; determine which tile table to use (0-3)
@@ -5027,6 +5071,29 @@ TitleLayout:
 	.db $21, $D1, $09, $13, $05, $08, $08, $04, $05, $04, $05, $08
 	.db $21, $F1, $09, $11, $07, $09, $09, $06, $07, $06, $07, $09
 
+IFDEF PLAYER_STUFF_TITLE
+      .BYTE $22,$6,4,$14,$15,$16,$17		  
+      .BYTE $22,$26,4,$18,$19,$1A,$1B		  
+      .BYTE $22,$46,4,$1C,$1D,$1E,$1F		  
+      .BYTE $22,$66,4,$FC,$FC,$FC,$20		  
+      .BYTE $22,$86,4,$76,$76,$76,$21		  
+FunkyLittleSeedBlock:
+      .BYTE $22, $B, $0F, $DD, $E8, $E8, $EB, $FB, $EB, $DA, $E7, $DD, $E8, $E6, $E2, $F3, $DE, $EB;
+FunkyLittleSeedBlock2:
+      .BYTE $22, $2B, $0F, $e7, $e8, $fb, $e8, $db, $e3, $de, $dc, $ed, $e2, $ef, $de, $fb, $fb, $fb;  
+FunkyLittleSeedBlock3:
+      .BYTE $22, $4B, $0F, $CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF
+FunkyLittleSeedBlock4:
+      .BYTE $22, $6B, $0F, $CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF
+FunkyLittleSeedBlock5:
+      .BYTE $22, $8B, $0F, $CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF
+FunkyLittleSeedBlock6:
+      .BYTE $22, $a7, $13, $CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF
+FunkyLittleSeedBlock7:
+      .BYTE $22, $c7, $13, $CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF
+ENDIF
+
+IFNDEF PLAYER_STUFF_TITLE
 	; 2
 	;             22222222222222222222222
 	.db $22, $0E, $04, $14, $15, $16, $17
@@ -5034,7 +5101,10 @@ TitleLayout:
 	.db $22, $4E, $04, $1C, $1D, $1E, $1F
 	.db $22, $6E, $04, $FC, $FC, $FC, $20
 	.db $22, $8E, $04, $76, $76, $76, $21
+ENDIF
 
+
+IFNDEF PLAYER_STUFF_TITLE
 	; (C) 1988
 	;                  (C)  111  999  888  888
 	.db $22, $E9, $05, $F8, $D1, $D9, $D8, $D8 ; (C) 1988
@@ -5042,11 +5112,25 @@ TitleLayout:
 	; NINTENDO
 	;                  NNN  III  NNN  TTT  EEE  NNN  DDD  OOO
 	.db $22, $EF, $08, $E7, $E2, $E7, $ED, $DE, $E7, $DD, $E8
+ENDIF
+IFDEF PLAYER_STUFF_TITLE
+	; (C) 1988
+	;                  (C)  111  999  888  888
+	.db $22, $E7, $05, $F8, $D1, $D9, $D8, $D8  ; (C) 1988
 
+	.db $22, $EC, $05, $F4, $D2, $D0, $D1, $D9  ; (C) 1988
+
+	; NINTENDO
+	;                  NNN  III  NNN  TTT  EEE  NNN  DDD  OOO
+	.db $22, $F2, $08, $E7, $E2, $E7, $ED, $DE, $E7, $DD, $E8
+ENDIF
+
+IFNDEF PLAYER_STUFF_TITLE
 	.db $23, $CA, $04, $80, $A0, $A0, $20
 	.db $23, $D1, $0E, $80, $A8, $AA, $AA, $A2, $22, $00, $00, $88, $AA, $AA, $AA, $AA, $22
 	.db $23, $E3, $02, $88, $22
 	.db $23, $EA, $04, $F0, $F8, $F2, $F0
+ENDIF
 	.db $00
 
 IFDEF PAD_TITLE_SCREEN_PPU_DATA
@@ -5054,7 +5138,12 @@ IFDEF PAD_TITLE_SCREEN_PPU_DATA
 ENDIF
 
 TitleBackgroundPalettes:
+IFDEF PLAYER_STUFF_TITLE 
+    .db $22,$32,$93,$7
+ENDIF
+IFNDEF PLAYER_STUFF_TITLE
 	.db $22, $37, $16, $07 ; Most of screen, outline, etc.
+ENDIF
 	.db $22, $30, $31, $0F ; Unused
 	.db $22, $30, $0F, $0F ; Logo
 	.db $22, $30, $0F, $0F ; Copyright, Story
@@ -5068,6 +5157,7 @@ TitleSpritePalettes:
 TitleStoryText_STORY:
 	.db $EC, $ED, $E8, $EB, $F2 ; STORY
 
+IFNDEF PLAYER_STUFF_TITLE
 TitleStoryTextPointersHi:
 	.db >TitleStoryText_Line01
 	.db >TitleStoryText_Line02
@@ -5096,6 +5186,62 @@ TitleStoryTextPointersLo:
 	.db <TitleStoryText_Line06
 	.db <TitleStoryText_Line07
 	.db <TitleStoryText_Line08
+	.db <TitleStoryText_Line08 ; For some reason line 8 is referenced twice here, but not used
+	.db <TitleStoryText_Line09
+	.db <TitleStoryText_Line10
+	.db <TitleStoryText_Line11
+	.db <TitleStoryText_Line12
+	.db <TitleStoryText_Line13
+	.db <TitleStoryText_Line14
+	.db <TitleStoryText_Line15
+	.db <TitleStoryText_Line16
+ENDIF
+
+IFDEF PLAYER_STUFF_TITLE
+TitleStoryTextPointersHi:
+	.db >TitleStoryText_Line01
+	.db >TitleStoryText_Line02
+	.db >TitleStoryText_Line03
+	.db >TitleStoryText_Line04
+	.db >TitleStoryText_Line05
+	.db >TitleStoryText_Line06
+	.db >TitleStoryText_Line07
+	.db >TitleStoryText_Line08
+	.db >TitleStoryText_Line09
+	.db >TitleStoryText_Line10
+	.db >TitleStoryText_Line11
+	.db >TitleStoryText_Line12
+	.db >TitleStoryText_Line13
+	.db >TitleStoryText_Line14
+	.db >TitleStoryText_Line15
+	.db >TitleStoryText_Line16
+	.db >TitleStoryText_LineBlank
+	.db >TitleStoryText_LineCredit1
+	.db >TitleStoryText_LineCredit2
+	.db >TitleStoryText_LineCredit3
+	.db >TitleStoryText_LineCredit4
+	.db >TitleStoryText_LineCredit5
+	.db >TitleStoryText_LineCredit6
+	.db >TitleStoryText_LineCredit7
+	.db >TitleStoryText_LineCredit8
+	.db >TitleStoryText_LineCredit9
+	.db >TitleStoryText_LineCreditA
+	.db >TitleStoryText_LineCreditB
+	.db >TitleStoryText_LineCreditC
+	.db >TitleStoryText_LineCreditD
+	.db >TitleStoryText_LineCreditE
+	.db >TitleStoryText_LineCreditF
+	.db >TitleStoryText_LineBlank
+	.db >TitleStoryText_LineStart
+
+TitleStoryTextPointersLo:
+	.db <TitleStoryText_Line01
+	.db <TitleStoryText_Line02
+	.db <TitleStoryText_Line03
+	.db <TitleStoryText_Line04
+	.db <TitleStoryText_Line05
+	.db <TitleStoryText_Line06
+	.db <TitleStoryText_Line07
 	.db <TitleStoryText_Line08
 	.db <TitleStoryText_Line09
 	.db <TitleStoryText_Line10
@@ -5105,6 +5251,25 @@ TitleStoryTextPointersLo:
 	.db <TitleStoryText_Line14
 	.db <TitleStoryText_Line15
 	.db <TitleStoryText_Line16
+	.db <TitleStoryText_LineBlank
+	.db <TitleStoryText_LineCredit1
+	.db <TitleStoryText_LineCredit2
+	.db <TitleStoryText_LineCredit3
+	.db <TitleStoryText_LineCredit4
+	.db <TitleStoryText_LineCredit5
+	.db <TitleStoryText_LineCredit6
+	.db <TitleStoryText_LineCredit7
+	.db <TitleStoryText_LineCredit8
+	.db <TitleStoryText_LineCredit9
+	.db <TitleStoryText_LineCreditA
+	.db <TitleStoryText_LineCreditB
+	.db <TitleStoryText_LineCreditC
+	.db <TitleStoryText_LineCreditD
+	.db <TitleStoryText_LineCreditE
+	.db <TitleStoryText_LineCreditF
+	.db <TitleStoryText_LineBlank
+	.db >TitleStoryText_LineStart
+ENDIF
 
 TitleStoryText_Line01:
 	.db $F0, $E1, $DE, $E7, $FB, $FB, $E6, $DA, $EB, $E2, $E8, $FB, $E8, $E9, $DE, $E7
@@ -5166,9 +5331,98 @@ TitleStoryText_Line15:
 	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
 	.db $FB, $FB, $FB, $FB ; (blank)
 
+TitleStoryText_LineStart:
 TitleStoryText_Line16:
 	.db $FB, $FB, $E9, $EE, $EC, $E1, $FB, $EC, $ED, $DA, $EB, $ED, $FB, $DB, $EE, $ED
 	.db $ED, $E8, $E7, $FB ; PUSH START BUTTON
+
+IFDEF PLAYER_STUFF_TITLE
+TitleStoryText_LineExtra:
+	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
+	.db $FB, $FB, $FB, $FB ; (blank)
+
+TitleStoryText_LineBlank:
+	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
+	.db $FB, $FB, $FB, $FB ; (blank)
+
+TitleStoryText_LineCredit1:
+    .db $E9, $EB, $E8, $E0, $EB, $DA, $E6, $E6, $DE, $DD, $FB, $DB, $F2, $FB, $FB;
+	.db $FB, $FB, $FB ; 
+	.db $ac, $ae; sheepright
+
+TitleStoryText_LineCredit2:
+    .db $E9, $DE, $E9, $E9, $DE, $EB, $E9, $E8, $F0, $DE, $EB;
+	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB ; pepperpower
+	.db $ad, $af; (blank)
+
+TitleStoryText_LineCredit3:
+	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
+	.db $FB, $FB, $FB, $FB ; (blank)
+
+TitleStoryText_LineCredit4:
+	.db $b4, $b6; devilright
+	.db $FB ; (blank)
+    .db $DA, $EC, $E6, $FB, $DD, $E8, $DC, $EE, $E6, $DE, $E7, $ED, $DA, $ED, $E2, $E8, $E7
+
+TitleStoryText_LineCredit5:
+	.db $b5, $b7, $c9 ; (blank)
+	.db $FB, $FB, $FB ; (blank)
+	.db $FB;
+    .db $F1, $E4, $DE, $DE, $E9, $DE, $EB, $F7, $FB, $E4, $E6, $DC, $E4, $FB, $FB
+
+TitleStoryText_LineCredit6:
+	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
+	.db $FB, $FB, $FB, $FB ; (blank)
+
+TitleStoryText_LineCredit7:
+    .db $DC, $EE, $EC, $ED, $E8, $E6, $FB, $E0, $EB, $DA, $E9, $E1, $E2, $DC, $EC
+	.db $FB, $FB, $FB ; (blank)
+	.db $b0, $b2; (blank)
+
+TitleStoryText_LineCredit8:
+    .db $E9, $DA, $E4, $E8, $F7, $FB, $E9, $DE, $E9, $E9, $DE, $EB, $E9, $E8, $F0, $DE, $EB
+	.db $FB, $b1, $b3; (blank)
+
+TitleStoryText_LineCredit9:
+	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
+	.db $FB, $FB, $FB, $FB ; (blank)
+
+TitleStoryText_LineCreditA:
+	.db $BC, $BE, $FB, $FB, $FB, $FB, $FB, $FB, $FB
+    .db $E9, $EB, $E8, $E0, $FB, $DA, $EC, $EC, $E2, $EC, $ED, $FB, $FB, $FB, $FB
+	.db $FB, $FB, $FB, $FB ; (blank)
+	.db $CF, $CF, $CF, $CF ; (blank)
+
+TitleStoryText_LineCreditB:
+	.db $BD, $BF, $FB, $FB, $FB, $FB, $FB
+    .db $E4, $E6, $DC, $E4, $F7, $FB, $F1, $E4, $DE, $DE, $E9, $DE, $EB, $FB, $FB
+	.db $FB, $FB, $FB, $FB ; (blank)
+	.db $CF, $CF, $CF, $CF ; (blank)
+
+TitleStoryText_LineCreditC:
+	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
+	.db $FB, $FB, $FB, $FB ; (blank)
+	.db $CF, $CF, $CF, $CF ; (blank)
+
+TitleStoryText_LineCreditD:
+    .db $EC, $E9, $DE, $DC, $E2, $DA, $E5, $FB, $ED, $E1, $DA, $E7, $E4, $EC, $FB
+	.db $FB, $FB, $FB, $FB ; (blank)
+	.db $FB; (blank)
+
+TitleStoryText_LineCreditE:
+    .db $FB, $ED, $DE, $ED, $EB, $DA, $E5, $F2, $F7, $FB, $E5, $E8, $E0, $E2, $E7, $EC, $E2, $E7, $DE, $F1
+	.db $FB, $FB, $FB, $FB ; (blank)
+	.db $CF, $CF, $CF, $CF ; (blank)
+
+TitleStoryText_LineCreditF:
+    .db $FB, $FB, $FB, $FB, $DA, $E7, $DD, $FB, $F2, $E8, $EE, $CE, $FB, $cb, $cd, $FB
+	.db $FB, $FB, $FB ; (blank)
+	.db $FB; (blank)
+
+
+    
+
+ENDIF
 
 TitleAttributeData1:
 	.db $23, $CB, $42, $FF
@@ -5207,6 +5461,25 @@ InitMemoryLoop:
 	LDX byte_RAM_1
 	CPX #$02
 	BCS InitMemoryLoop ; Stop initialization after we hit $200.
+
+IFDEF PLAYER_STUFF_TITLE
+	LDY #$78 ; Does initialization of RAM.
+	STY byte_RAM_1 ; This clears $200 to $7FF.
+	LDY #$00
+	STY byte_RAM_0
+	TYA
+
+InitMemoryLoop_Custom:
+	STA (byte_RAM_0), Y ; I'm not sure if a different method of initializing memory
+; would work better in this case.
+	DEY
+	BNE InitMemoryLoop_Custom
+
+	DEC byte_RAM_1
+	LDX byte_RAM_1
+	CPX #$72
+	BCS InitMemoryLoop_Custom; Stop initialization after we hit $200.
+ENDIF
 
 loc_BANK0_9A53:
 	LDA #$00
@@ -5260,6 +5533,9 @@ InitTitleBackgroundPalettesLoop:
 	LDA #$03
 	STA byte_RAM_10
 	LDA #$25
+IFDEF PLAYER_STUFF_TITLE
+    LDA #$16
+ENDIF
 	STA byte_RAM_2
 	LDA #$20
 	STA PlayerXHi
@@ -5389,6 +5665,10 @@ loc_BANK0_9B59:
 loc_BANK0_9B63:
 	LDA ObjectXHi + 3
 	CMP #$09
+IFDEF PLAYER_STUFF_TITLE
+	CMP #$11
+    BEQ TitleScreen_WriteCreditsText
+ENDIF
 	BEQ loc_BANK0_9B93
 
 	LDA ObjectXHi + 3
@@ -5401,7 +5681,41 @@ loc_BANK0_9B63:
 
 ; ---------------------------------------------------------------------------
 
+IFDEF PLAYER_STUFF_TITLE
+TitleStoryText_CREDITS:
+	.db $DC, $EB, $DE, $DD, $E2, $ED, $EC ; CREDITS
+
+TitleScreen_WriteCreditsText:
+    ; PPUBuffer_301
+    ; ObjectXHi    ;; vis row
+    ; PlayerXHi    ;; vis col
+    ; ObjectXHi + 3 ;; cnt lines
+    ; ObjectXHi + 5 ;; vis row timer
+	LDA #$20
+	STA PPUBuffer_301
+	LDA #$0AD
+	STA PPUBuffer_301 + 1
+	LDA #$07 ; Length of STORY text (5 bytes)
+	STA PPUBuffer_301 + 2
+	LDY #$06 ; Bytes to copy minus one (5-1=4)
+
+TitleScreen_WriteCreditsTextLoop:
+	LDA TitleStoryText_CREDITS, Y ; Copy STORY text to PPU write buffer
+	STA PPUBuffer_301 + 3, Y
+	DEY
+	BPL TitleScreen_WriteCreditsTextLoop
+
+	LDA #$00 ; Terminate STORY text in buffer
+	STA PPUBuffer_301 + 10
+    JMP loc_BANK0_9B93
+ENDIF
+
 TitleScreen_WriteSTORYText:
+    ; PPUBuffer_301
+    ; ObjectXHi    ;; vis row
+    ; PlayerXHi    ;; vis col
+    ; ObjectXHi + 3 ;; cnt lines
+    ; ObjectXHi + 5 ;; vis row timer
 	LDA #$20
 	STA PPUBuffer_301
 	LDA #$0AE
@@ -5419,7 +5733,7 @@ TitleScreen_WriteSTORYTextLoop:
 	LDA #$00 ; Terminate STORY text in buffer
 	STA PPUBuffer_301 + 8
 
-loc_BANK0_9B93:
+loc_BANK0_9B93: ;; reset to top?
 	INC ObjectXHi + 3
 	LDA #$21
 	STA PlayerXHi
@@ -5434,17 +5748,22 @@ loc_BANK0_9BA3:
 	BPL loc_BANK0_9C19
 
 loc_BANK0_9BA7:
+IFNDEF PLAYER_STUFF_TITLE
 	LDA #$40
+ENDIF
+IFDEF PLAYER_STUFF_TITLE
+    LDA #$28 ;; line speed
+ENDIF
 	STA ObjectXHi + 5
 	LDA PlayerXHi
 	STA PPUBuffer_301
 
 loc_BANK0_9BB0:
-	LDA ObjectXHi
+	LDA ObjectXHi ;; row
 
 loc_BANK0_9BB2:
 	STA PPUBuffer_301 + 1
-	LDA #$14
+	LDA #$14                ; column
 	STA PPUBuffer_301 + 2
 	LDX ObjectXHi + 3
 	DEX
@@ -5452,35 +5771,46 @@ loc_BANK0_9BB2:
 	STA byte_RAM_4
 	LDA TitleStoryTextPointersLo, X
 	STA byte_RAM_3
-	LDY #$00
-	LDX #$13
+	LDY #$00 ; array pos
+	LDX #$13 ; length string
 
 loc_BANK0_9BCB:
 	LDA (byte_RAM_3), Y
 	STA PPUBuffer_301 + 3, Y
 	INY
 	DEX
-	BPL loc_BANK0_9BCB
+	BPL loc_BANK0_9BCB ;; loop end
 
 	LDA #$00
 	STA PPUBuffer_301 + 3, Y
 	INC ObjectXHi + 3
 	LDA ObjectXHi
 	CLC
-	ADC #$40
+IFDEF PLAYER_STUFF_TITLE
+	ADC #$20 ;; row shift
+ENDIF
+IFNDEF PLAYER_STUFF_TITLE
+	ADC #$40 ;; row shift
+ENDIF
 	STA ObjectXHi
-	LDA PlayerXHi
+	LDA PlayerXHi ;; carry adds after objectxhi
 	ADC #$00
 	STA PlayerXHi
-	LDA ObjectXHi + 3
+	LDA ObjectXHi + 3 ;; how many lines?  after 9, clear
 	CMP #$09
-	BCC loc_BANK0_9C19
+IFDEF PLAYER_STUFF_TITLE
+	CMP #$11
+ENDIF
+	BCC loc_BANK0_9C19 ;; if under 9, skip
 
-	BNE loc_BANK0_9C0B
+	BNE loc_BANK0_9C0B ;; if exactly 9, proceed down
 
-	LDA #$09
+	LDA #$09 ;; starting delay
 	STA byte_RAM_2
 	LDA #$03
+IFDEF PLAYER_STUFF_TITLE
+	LDA #$06
+ENDIF
 	STA byte_RAM_10
 	LDA #$20
 	STA PlayerXHi
@@ -5490,18 +5820,24 @@ loc_BANK0_9BCB:
 	STA ObjectXHi + 1
 	LDA #$00
 	STA ObjectXHi + 2
+
 	JMP loc_BANK0_9ABB
 
 ; ---------------------------------------------------------------------------
-
 loc_BANK0_9C0B:
 	CMP #$12
+IFDEF PLAYER_STUFF_TITLE
+	CMP #$22
+ENDIF
 	BCC loc_BANK0_9C19
 
 	INC ObjectXHi + 4
 	LDA #$25
 	STA byte_RAM_2
 	LDA #$03
+IFDEF PLAYER_STUFF_TITLE
+	LDA #$06
+ENDIF
 	STA byte_RAM_10
 
 loc_BANK0_9C19:
@@ -7686,5 +8022,6 @@ CreateEnemy_Bank1_FoundSlot:
 IFDEF MIGRATE_PLAYER_RENDER
 
 .include "src/systems/render-player.asm"
+
 
 ENDIF

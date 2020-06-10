@@ -153,7 +153,7 @@ AREA_HEADER_TILESET = 1
 ; LEVEL_ENGINE_UPGRADES = 1
 
 ; Enables quicksand tile behavior outside of worlds 2 and 6
-; ALWAYS_ALLOW_QUICKSAND = 1
+ALWAYS_ALLOW_QUICKSAND = 1
 
 ; Use a tile attributes table for rather than TileSolidnessTable
 ; ENABLE_TILE_ATTRIBUTES_TABLE = 1
@@ -172,6 +172,20 @@ CUSTOM_LEVEL_RLE = 1
 
 MIGRATE_RENDER_PLAYER = 1
 
+TRANSITION_INVULN = 1
+
 HEALTH_REVAMP = 1
+
+.include "src/extras/custom-defines.asm"
+
+PLAYER_STUFF_TITLE = 1
+
+SMALL_HITBOX = 1
+
+CUSTOM_TILE_IDS = 1
+
+DEBUG = 1
+
+FLAG_SYSTEM = 1
 
 .endinl

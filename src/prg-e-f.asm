@@ -2016,6 +2016,9 @@ sub_BANKF_EA68:
 
 ; End of function sub_BANKF_EA68
 
+IFDEF FLAG_SYSTEM
+	.include "src/extras/flag-set.asm"
+ENDIF
 
 ;
 ; Converts a number to numerical tiles with space for 2 digits
@@ -3114,6 +3117,24 @@ DecrementPlayerStateTimers_Zero:
 	DEX
 	BPL DecrementPlayerStateTimers_Loop
 
+IFDEF TRANSITION_INVULN
+    LDA DamageInvulnTime
+    BNE +
+    LDA AreaTransitioned_Invuln
+    BEQ +
+    STA DamageInvulnTime
+    LDA Player1JoypadHeld
+    AND #$F
+    BNE ++
+    LDA Player1JoypadPress
+    BNE ++
+    LDA PlayerYVelocity
+    CMP #4
+    BCC +
+++  LDA #0
+    STA AreaTransitioned_Invuln
++
+ENDIF
 	; If invincible, decrement timer every 8 frames
 	LDY StarInvincibilityTimer
 	BEQ RunFrame_Exit
@@ -3257,16 +3278,41 @@ LevelInitialization_AreaSetupLoop:
 
 
 RestorePlayerToFullHealth:
-	LDY PlayerMaxHealth ; Get player's current max HP
-	LDA PlayerHealthValueByHeartCount, Y ; Get the health value for this amount of hearts
-	STA PlayerHealth
-	RTS
+IFDEF HEALTH_REVAMP
+    INC PlayerMaxHealth
 
+	LDA PlayerHealth
+    CMP #$FF
+    BEQ +++
+    LSR
+    LSR
+    LSR
+    LSR
+    CMP PlayerMaxHealth
+    BCS +++
+    LDA PlayerMaxHealth
+    ASL
+    ASL
+    ASL
+    ASL
+    STA PlayerHealth
++++ DEC PlayerMaxHealth
+	LDA PlayerHealth
+    ORA #$F
+	STA PlayerHealth
+      RTS
+ENDIF
+IFNDEF HEALTH_REVAMP
+      LDY     PlayerMaxHealth			  ; Get	player's current max HP
+      LDA     PlayerHealthValueByHeartCount,Y	  ; Get	the health value for this amount of hearts
+      STA     PlayerHealth
+      RTS
 
 PlayerHealthValueByHeartCount:
 	.db PlayerHealth_2_HP
 	.db PlayerHealth_3_HP
 	.db PlayerHealth_4_HP
+ENDIF
 ; Max hearts = (hearts - 2), value is 0,$01,2
 ; This table determines what the player's HP is set to
 
@@ -3966,6 +4012,17 @@ TileSolidnessTable:
 	.db $69
 	.db $98
 	.db $D5
+
+IFDEF CUSTOM_TILE_IDS
+CustomSolid = $77a0
+CheckCustomSolidness:
+	SEC
+	SBC #$D8
+	TAX
+	LDA CustomSolid, X
+	STA DrawTileId
+	RTS
+ENDIF
 
 IFDEF ENABLE_TILE_ATTRIBUTES_TABLE
 ; ELSE
