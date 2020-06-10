@@ -717,23 +717,11 @@ CopyBackgroundToPPUBuffer_Vertical:
 CopyBackgroundToPPUBuffer_Vertical_Loop:
 	LDY ReadLevelDataOffset
 	LDA (ReadLevelDataAddress), Y
-	IFDEF CUSTOM_TILE_IDS
-	CMP #$D8
-	BCC +
-	STX byte_RAM_300
-	JSR CheckCustomSolidness
-	LDA (ReadLevelDataAddress), Y
-	LDX byte_RAM_300
-	SBC #$D8
-	ASL
-	ASL
-	STA byte_RAM_0
-	LDA #$77
-	STA byte_RAM_1
-	LDY #$0
-	JMP ++
+IFDEF CUSTOM_TILE_IDS
+	.include "src/extras/custom-tile-id.asm"
+	JMP ++ ;; leaves to flag outside...
 	+
-	ENDIF
+ENDIF
 	STA DrawTileId
 	AND #%11000000
 	ASL A
@@ -1729,6 +1717,11 @@ loc_BANK0_8856:
 	LDX byte_RAM_8
 	RTS
 
+IFDEF DRAW_SECRET
+DetectSecret:
+	.include "src/extras/secret-detection.asm"
+	RTS
+ENDIF
 
 ;
 ; Draws the background data to the PPU buffer
@@ -1745,21 +1738,13 @@ CopyBackgroundToPPUBuffer_Horizontal_Loop:
 	LDY ReadLevelDataOffset
 	LDA (ReadLevelDataAddress), Y
 IFDEF CUSTOM_TILE_IDS
-	CMP #$D8
-	BCC +
-	JSR CheckCustomSolidness
-	LDA (ReadLevelDataAddress), Y
-	SBC #$D8
-	ASL
-	ASL
-	STA byte_RAM_0
-	LDA #$77
-	STA byte_RAM_1
-	LDY #$0
-	JMP ++
+	.include "src/extras/custom-tile-id.asm"
+	JMP ++ ;; leaves to flag outside...
 	+
 ENDIF
-
+IFDEF DRAW_SECRET
+	JSR DetectSecret
+ENDIF
 	STA DrawTileId
 	AND #%11000000
 	ASL A
@@ -1772,8 +1757,13 @@ ENDIF
 	LDA TileQuadPointersHi, Y
 	STA byte_RAM_1
 
+IFNDEF DRAW_SECRET
 	LDY ReadLevelDataOffset
 	LDA (ReadLevelDataAddress), Y
+ENDIF
+IFDEF DRAW_SECRET
+	LDA DrawTileId
+ENDIF
 	ASL A
 	ASL A
 	TAY

@@ -1,3 +1,5 @@
+AreaTransitioned_Invuln = $7300
+
 PlayerLevelPowerup_1 = $7600
 PlayerLevelPowerup_2 = $7601
 PlayerLevelPowerup_3 = $7602 ; change these slots to only read once, store variable into mushroom

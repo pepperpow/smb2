@@ -409,17 +409,18 @@ ChkFlag_Inner:
 Unmodified_Return:
     RTS
 
-;ChkFlagPlayer3:
-;    JSR LoadFlagPlayer3
-;    JMP +
-;ChkFlagPlayer2:
-;    JSR LoadFlagPlayer2
-;    JMP +
-;ChkFlagPlayer:
-;    JSR LoadFlagPlayer
-;+   LDY CurrentCharacter
-;--  JSR ChkFlag
-;    RTS
+ChkFlagPlayer3:
+    JSR LoadFlagPlayer3
+    JMP +
+ChkFlagPlayer2:
+    JSR LoadFlagPlayer2
+    JMP +
+ChkFlagPlayer:
+    JSR LoadFlagPlayer
++   LDY CurrentCharacter
+--  JSR ChkFlag
+    RTS
+
 ChkFlagLevel:
     JSR LoadFlagLevel
     LDY CurrentLevelAreaIndex
@@ -476,24 +477,24 @@ LoadFlagWorld:
     STA $c5 + 1
     RTS
 
-;LoadFlagPlayer: ;; use a table for this
-;    LDA #<Player_Bit_Flags
-;    STA $c5
-;    LDA #>Player_Bit_Flags
-;    STA $c5 + 1
-;    RTS
-;
-;LoadFlagPlayer2:
-;    LDA #<Player_Bit_Flags_2
-;    STA $c5
-;    LDA #>Player_Bit_Flags_2
-;    STA $c5 + 1
-;    RTS
-;
-;LoadFlagPlayer3:
-;    LDA #<Player_Bit_Flags_3
-;    STA $c5
-;    LDA #>Player_Bit_Flags_3
-;    STA $c5 + 1
-;    RTS
+LoadFlagPlayer: ;; use a table for this
+    LDA #<Player_Bit_Flags
+    STA $c5
+    LDA #>Player_Bit_Flags
+    STA $c5 + 1
+    RTS
+
+LoadFlagPlayer2:
+    LDA #<Player_Bit_Flags_2
+    STA $c5
+    LDA #>Player_Bit_Flags_2
+    STA $c5 + 1
+    RTS
+
+LoadFlagPlayer3:
+    LDA #<Player_Bit_Flags_3
+    STA $c5
+    LDA #>Player_Bit_Flags_3
+    STA $c5 + 1
+    RTS
 

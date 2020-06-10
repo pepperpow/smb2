@@ -159,7 +159,7 @@ ALWAYS_ALLOW_QUICKSAND = 1
 ; ENABLE_TILE_ATTRIBUTES_TABLE = 1
 
 ; Disables door pointers, so that area pointers are always required
-; DISABLE_DOOR_POINTERS = 1
+; DISABLE_DOOR_POINTERS = 1uuuuuuuuuuuuuu
 
 ; Enables full-page door/vine searching so that entrances don't need to align
 ROBUST_TRANSITION_SEARCH = 1
@@ -176,11 +176,13 @@ TRANSITION_INVULN = 1
 
 HEALTH_REVAMP = 1
 
-.include "src/extras/custom-defines.asm"
+.include "src/extras/player-defines.asm"
 
 PLAYER_STUFF_TITLE = 1
 
 SMALL_HITBOX = 1
+
+DRAW_SECRET = 1
 
 CUSTOM_TILE_IDS = 1
 
