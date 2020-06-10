@@ -1013,8 +1013,10 @@ sub_BANK0_84AC:
 	JMP SetTilePaletteInPPUAttribute
 
 
+IFNDEF CUSTOM_UNUSED
 ; Unused space in the original ($84B8 - $84FF)
 unusedSpace $8500, $FF
+ENDIF
 
 
 ;
@@ -8049,9 +8051,8 @@ CreateEnemy_Bank1_FoundSlot:
 
 .include "src/extras/controller-2-debug.asm"
 
-IFDEF MIGRATE_PLAYER_RENDER
+IFDEF MIGRATE_QUADS
 
-.include "src/systems/render-player.asm"
-
+.include "src/systems/tile-quads.asm"
 
 ENDIF

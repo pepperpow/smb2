@@ -39,7 +39,7 @@ COMPATIBILITY = 1
 ; within them to the end, making it easier to add your own code anywhere.
 ; ...but it might also cause problems if data gets relocated
 ; when it isn't properly pointed to.
-PRESERVE_UNUSED_SPACE = 1
+; PRESERVE_UNUSED_SPACE = 1
 
 
 ; ----------------------------------------
@@ -166,11 +166,13 @@ ROBUST_TRANSITION_SEARCH = 1
 
 JUMP_THROW_FIX = 1
 
-SCROLL_FIX = 1
+; SCROLL_FIX = 1
 
 CUSTOM_LEVEL_RLE = 1
 
-MIGRATE_RENDER_PLAYER = 1
+CUSTOM_PLAYER_RENDER = 1
+
+MIGRATE_QUADS = 1
 
 TRANSITION_INVULN = 1
 
@@ -197,5 +199,9 @@ LEVEL_FLAGS = 1
 DAMAGE_RESIST = 1
 
 LOCKED_DOOR = 1
+
+TEST_FLAG = 1
+
+CUSTOM_UNUSED = 1
 
 .endinl
