@@ -3399,11 +3399,18 @@ EnemyBehavior_PickUpNotCrystalBall:
 	BNE EnemyBehavior_PickUpNotMushroom
 
 EnemyBehavior_PickUpMushroom:
+IFDEF CUSTOM_MUSH 
+    JSR ProcessCustomPowerupAward
+    LDX byte_RAM_12
+    LDA #Enemy_MushroomBlock
+    STA ObjectType, X
+ELSE
 	LDX EnemyVariable
 	INC Mushroom1Pulled, X
 	LDX byte_RAM_12
 	INC PlayerMaxHealth
 	JSR RestorePlayerToFullHealth
+ENDIF
 
 	LDA #Music2_MushroomGetJingle
 	STA MusicQueue2
@@ -6048,10 +6055,14 @@ loc_BANK2_9CD9:
 
 	LDA byte_RAM_3
 	STA SpriteDMAArea + $02, Y
+IFNDEF CUSTOM_MUSH
 	STA SpriteDMAArea + $0A, Y
+ENDIF
 	ORA #$40
 	STA SpriteDMAArea + $06, Y
+IFNDEF CUSTOM_MUSH
 	STA SpriteDMAArea + $0E, Y
+ENDIF
 
 locret_BANK2_9CF1:
 	RTS
@@ -6076,10 +6087,62 @@ locret_BANK2_9CF1:
 SetSpriteTiles:
 	LDA byte_RAM_C
 	AND #$20
+IFNDEF CUSTOM_MUSH
 	BNE SetSpriteTiles_24x16
+ENDIF
+IFDEF CUSTOM_MUSH
+    BEQ +
+	JMP SetSpriteTiles_24x16
++
+ENDIF
 
 	LDA byte_RAM_B
 	BNE SetSpriteTiles_Tilemap2
+
+IFDEF CUSTOM_MUSH ;; only for mushrooms, but should be extended
+	CPX #$D9
+	BCC +x
+	TXA
+	SBC #$DA
+	TAX
+	JMP +
++x
+    TXA
+    PHA
+    LDX byte_RAM_12
+    LDA ObjectType,X
+    CMP #Enemy_Mushroom
+    BEQ +
+IFDEF PLAYER_STUFF_UNUSED
+    CMP #Enemy_Fireball
+    BEQ +
+    CMP #Enemy_Bullet
+    BEQ +
+ENDIF
+    PLA
+    TAX
+    JMP ++
++   LDA byte_RAM_12
+    ASL
+    ASL
+    TAX
+SetSpriteTiles_Tilemap3:
+	LDA SpriteTableCustom1, X
+	STA SpriteDMAArea + 1, Y
+	LDA SpriteTableCustom1 + 1, X
+	STA SpriteDMAArea + 5, Y
+	BNE +++
+
+SetSpriteTiles_Tilemap4:
+	LDA SpriteTableCustom2, X
+	STA SpriteDMAArea + 1, Y
+	LDA SpriteTableCustom2 + 1, X
+	STA SpriteDMAArea + 5, Y
++++ PLA
+    TAX
+    JMP SetSpriteTiles_CheckDirection
+++
+ENDIF
 
 SetSpriteTiles_Tilemap1:
 	LDA EnemyTilemap1, X
@@ -6150,6 +6213,7 @@ loc_BANK2_9D53:
 	INX
 	RTS
 
+IFNDEF CUSTOM_MUSH
 SetSpriteTiles_24x16:
 	LDA EnemyTilemap2, X
 	STA SpriteDMAArea + 1, Y
@@ -6157,6 +6221,17 @@ SetSpriteTiles_24x16:
 	STA SpriteDMAArea + 5, Y
 	LDA EnemyTilemap2 + 2, X
 	STA SpriteDMAArea + 9, Y
+ENDIF
+
+IFDEF CUSTOM_MUSH
+SetSpriteTiles_24x16:
+	LDA SpriteTableCustom2, X
+	STA SpriteDMAArea + 1, Y
+	LDA SpriteTableCustom2 + 1, X
+	STA SpriteDMAArea + 5, Y
+	LDA SpriteTableCustom2 + 2, X
+	STA SpriteDMAArea + 9, Y
+ENDIF
 
 	LDA byte_RAM_2
 	LSR A

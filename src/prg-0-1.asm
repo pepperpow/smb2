@@ -5378,12 +5378,14 @@ TitleStoryText_LineBlank:
 	.db $FB, $FB, $FB, $FB ; (blank)
 
 TitleStoryText_LineCredit1:
-    .db $E9, $EB, $E8, $E0, $EB, $DA, $E6, $E6, $DE, $DD, $FB, $DB, $F2, $FB, $FB;
+    ;.db $E9, $EB, $E8, $E0, $EB, $DA, $E6, $E6, $DE, $DD, $FB, $DB, $F2, $FB, $FB;
+	.db "PROGRAMMED" + $99, $FB, "BY" + $99, $FB, $FB
 	.db $FB, $FB, $FB ; 
 	.db $ac, $ae; sheepright
 
 TitleStoryText_LineCredit2:
-    .db $E9, $DE, $E9, $E9, $DE, $EB, $E9, $E8, $F0, $DE, $EB;
+;    .db $E9, $DE, $E9, $E9, $DE, $EB, $E9, $E8, $F0, $DE, $EB;
+	.db "PEPPERPOW" + $99, $FB, $FB
 	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB ; pepperpower
 	.db $ad, $af; (blank)
 
@@ -5394,13 +5396,15 @@ TitleStoryText_LineCredit3:
 TitleStoryText_LineCredit4:
 	.db $b4, $b6; devilright
 	.db $FB ; (blank)
-    .db $DA, $EC, $E6, $FB, $DD, $E8, $DC, $EE, $E6, $DE, $E7, $ED, $DA, $ED, $E2, $E8, $E7
+	.db "ASM" + $99, $FB, "DOCUMENTATION" + $99
+;    .db $DA, $EC, $E6, $FB, $DD, $E8, $DC, $EE, $E6, $DE, $E7, $ED, $DA, $ED, $E2, $E8, $E7
 
 TitleStoryText_LineCredit5:
 	.db $b5, $b7, $c9 ; (blank)
 	.db $FB, $FB, $FB ; (blank)
 	.db $FB;
     .db $F1, $E4, $DE, $DE, $E9, $DE, $EB, $F7, $FB, $E4, $E6, $DC, $E4, $FB, $FB
+	.db "XKEEPER," + $99, $FB, "KMCK" + $99
 
 TitleStoryText_LineCredit6:
 	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB

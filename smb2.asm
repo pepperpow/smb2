@@ -148,7 +148,11 @@ ENDIF
 
 ; -----------------------------------------
 ; include CHR-ROM
+IFDEF CUSTOM_MUSH
+.incbin "smb2-custom.chr"
+ELSE
 .incbin "smb2.chr"
+ENDIF
 
 ; ----------------------------------------
 ; extra CHR-ROM pages

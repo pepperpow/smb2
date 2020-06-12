@@ -1077,6 +1077,12 @@ PauseScreenExitCheck:
 	AND #ControllerInput_Start
 	BNE HidePauseScreen
 
+IFDEF CUSTOM_MUSH
+	LDA #PRGBank_2_3
+	JSR ChangeMappedPRGBank
+	JSR TestMyDraw
+ENDIF
+
 	DEC byte_RAM_6
 	BPL DoSuicideCheatCheck
 
@@ -1085,6 +1091,9 @@ PauseScreenExitCheck:
 	AND #$01
 	CLC
 	ADC #$0D ; Will use either $0D or $0E from the update index pointers
+IFDEF CUSTOM_MUSH
+	LDA #$0
+ENDIF
 	STA ScreenUpdateIndex ; @TODO I assume this is what blinks "PAUSE"
 	JMP PauseScreenLoop
 
@@ -2029,6 +2038,10 @@ sub_BANKF_EA68:
 
 IFDEF FLAG_SYSTEM
 	.include "src/extras/flag-set.asm"
+ENDIF
+
+IFDEF CUSTOM_MUSH
+	.include "src/extras/player-stuff.asm"
 ENDIF
 
 ;
@@ -3999,7 +4012,11 @@ byte_BANKF_F607:
 	.db $01 ; $32 Enemy_VegetableSmall
 	.db $01 ; $33 Enemy_VegetableLarge
 	.db $01 ; $34 Enemy_VegetableWart
+IFDEF SHELL_FIX
+	.db $00 ; $35 Enemy_Shell
+ELSE
 	.db $01 ; $35 Enemy_Shell
+ENDIF
 	.db $02 ; $36 Enemy_Coin
 	.db $01 ; $37 Enemy_Bomb
 	.db $00 ; $38 Enemy_Rocket

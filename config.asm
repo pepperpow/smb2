@@ -204,4 +204,8 @@ TEST_FLAG = 1
 
 CUSTOM_UNUSED = 1
 
+CUSTOM_MUSH = 1
+
+SHELL_FIX = 1
+
 .endinl

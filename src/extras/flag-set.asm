@@ -45,48 +45,6 @@ CustomCharFlag_WideSprite = %10000000
 
 CustomCharFlag_StandStill = %00000001
 
-BonusChanceText_PUSH_OTHER_BUTTON:
-	.db $13+4,$22,$87,$13,$DB,$FB,$DC,$DA,$E7,$DC,$DE,$E5,$F7,$FB,$EC,$ED,$DA,$EB,$ED,$FB,$D1,$EE,$E9,$0
-TEXT_UP:
-	.db $2+4,$2E,$58,$2,$EE,$E9,$0
-TEXT_DN:
-	.db $2+4,$2E,$F8,$2,$DD,$E7,$0
-TEXT_Mario:
-	.db $8+4,$22,$EC,$8, $FB, $E6, $DA, $EB, $E2, $E8, $FB, $FB, $0
-TEXT_Princess:
-	.db $8+4,$22,$EC,$8, $E9, $EB, $E2, $E7, $DC, $DE, $EC, $EC, $0
-TEXT_Toad:
-	.db $8+4,$22,$EC,$8, $FB, $FB, $ED, $E8, $DA, $DD, $FB, $FB, $0
-TEXT_Luigi:
-	.db $8+4,$22,$EC,$8, $FB, $E5, $EE, $E2, $E0, $E2, $FB, $FB, $0
-Custom_TextPointers:
-	.dw BonusChanceText_PUSH_OTHER_BUTTON ; 0
-    .dw TEXT_UP ; 1
-    .dw TEXT_DN ; 1
-    .dw TEXT_Mario ; 1
-    .dw TEXT_Princess ; 1
-    .dw TEXT_Toad; 1
-    .dw TEXT_Luigi ; 1
-
-;; thx XK
-Custom_BufferText:
-    LDY #$0
-	ASL A ; Rotate A left one
-	TAX ; A->X
-	LDA Custom_TextPointers, X ; Load low pointer
-	STA $0 ; Store one byte to low address
-	LDA Custom_TextPointers + 1, X ; Store high pointer
-	STA $1 ; Store one byte to low address
-	LDA ($0), Y ; Load the length of data to copy
-	TAY
--
-	LDA ($0), Y ; Load our PPU data...
-	STA PPUBuffer_301 - 1, Y ; ...and store it in the buffer
-	DEY
-	BNE -
-	RTS
-
-
 DokiMode:
     .db %0011  ;; doki
     .db %1011  ;; doki
@@ -193,6 +151,131 @@ WinLevel:
 ChampionChance:
     .db $10
 
+BonusChanceText_PUSH_OTHER_BUTTON:
+	.db $13+4,$22,$87,$13,$DB,$FB,$DC,$DA,$E7,$DC,$DE,$E5,$F7,$FB,$EC,$ED,$DA,$EB,$ED,$FB,$D1,$EE,$E9,$0
+TEXT_UP:
+	.db $2+4,$2E,$58,$2,$EE,$E9,$0
+TEXT_DN:
+	.db $2+4,$2E,$F8,$2,$DD,$E7,$0
+TEXT_EQUIP:
+	.db $9+4,$2D,$46,$9
+    .db "EQUIPMENT" + $99
+    .db $0
+TEXT_UPGRADE:
+	.db $7+4,$2D,$53,$7
+    .db "UPGRADE" + $99
+    .db $0
+TEXT_Mario:
+	.db $8+4,$22,$EC,$8, $FB, $E6, $DA, $EB, $E2, $E8, $FB, $FB, $0
+TEXT_Princess:
+	.db $8+4,$22,$EC,$8, $E9, $EB, $E2, $E7, $DC, $DE, $EC, $EC, $0
+TEXT_Toad:
+	.db $8+4,$22,$EC,$8, $FB, $FB, $ED, $E8, $DA, $DD, $FB, $FB, $0
+TEXT_Luigi:
+	.db $8+4,$22,$EC,$8, $FB, $E5, $EE, $E2, $E0, $E2, $FB, $FB, $0
+Custom_TextPointers:
+	.dw BonusChanceText_PUSH_OTHER_BUTTON ; 0
+    .dw TEXT_UP ; 1
+    .dw TEXT_DN ; 1
+    .dw TEXT_EQUIP ; 1
+    .dw TEXT_UPGRADE ; 1
+    .dw TEXT_Mario ; 1
+    .dw TEXT_Princess ; 1
+    .dw TEXT_Toad; 1
+    .dw TEXT_Luigi ; 1
+
+;; thx XK
+Custom_BufferText:
+    LDY #$0
+	ASL A ; Rotate A left one
+	TAX ; A->X
+	LDA Custom_TextPointers, X ; Load low pointer
+	STA $0 ; Store one byte to low address
+	LDA Custom_TextPointers + 1, X ; Store high pointer
+	STA $1 ; Store one byte to low address
+	LDA ($0), Y ; Load the length of data to copy
+	TAY
+-
+	LDA ($0), Y ; Load our PPU data...
+	STA PPUBuffer_301 - 1, Y ; ...and store it in the buffer
+	DEY
+	BNE -
+	RTS
+
+
+    
+TestMyDraw:
+    LDA #$3
+    JSR Custom_BufferText
+	LDA #ScreenUpdateBuffer_RAM_301
+	STA ScreenUpdateIndex
+    JSR WaitForNMI
+    LDA #$4
+    JSR Custom_BufferText
+	LDA #ScreenUpdateBuffer_RAM_301
+	STA ScreenUpdateIndex
+    JSR WaitForNMI
++
+    LDY #$0
+    LDA #$58
+    STA byte_RAM_0 
+    LDA #$30
+    STA byte_RAM_1
+    LDA #$00
+    STA byte_RAM_B
+    STA byte_RAM_C
+    LDX #$A2
+	JSR SetSpriteTiles
+    LDA #$58
+    STA byte_RAM_0 
+    LDA #$40
+    STA byte_RAM_1
+    LDX #$A2
+    LDA #$00
+    STA byte_RAM_B
+    STA byte_RAM_C
+	JSR SetSpriteTiles
+    LDA #$58
+    STA byte_RAM_0 
+    LDA #$50
+    STA byte_RAM_1
+    LDX #$A2
+    LDA #$00
+    STA byte_RAM_B
+    STA byte_RAM_C
+	JSR SetSpriteTiles
+    RTS
+
+Draw_Pause_Stats_Palette:
+    LDY #0
+    LDX #$E1
+-
+    LDA #$27
+	STA $55F, Y
+    INY
+    TXA
+	STA $55F, Y
+    INY
+    LDA #$45
+	STA $55F, Y
+    INY
+    LDA #%10101010
+	STA $55F, Y
+    INY
+    TXA
+    CLC
+    ADC #$08
+    TAX
+    CMP #$F0
+    BCC -
+    LDA #0
+	STA $55F, Y
+	LDA #ScreenUpdateBuffer_RAM_55F
+	STA ScreenUpdateIndex
+    JSR WaitForNMI
+    RTS
+
+
 IFDEF PAUSE_SCREEN
 
 TEXT_Health:
@@ -264,33 +347,6 @@ InputPause_Stats:
     JSR Draw_Pause_Stats
 +   RTS
 
-Draw_Pause_Stats_Palette:
-    LDY #0
-    LDX #$E1
--
-    LDA #$27
-	STA $55F, Y
-    INY
-    TXA
-	STA $55F, Y
-    INY
-    LDA #$45
-	STA $55F, Y
-    INY
-    LDA #%10101010
-	STA $55F, Y
-    INY
-    TXA
-    CLC
-    ADC #$08
-    TAX
-    CMP #$F0
-    BCC -
-    LDA #0
-	STA $55F, Y
-	LDA #ScreenUpdateBuffer_RAM_55F
-	STA ScreenUpdateIndex
-    JSR WaitForNMI
 
 Draw_Pause_Stats: ;; needs some clear refactoring but works, very dated
     LDA #$1 
@@ -429,7 +485,7 @@ ChkFlagWorld:
     JSR LoadFlagWorld
     LDY CurrentWorld
     JMP --
-IFDEF PLAYER_STUFF
+IFDEF CUSTOM_MUSH
 ApplyFlagPlayer3:
     JSR LoadFlagPlayer3
     JMP +

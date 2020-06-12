@@ -3711,10 +3711,30 @@ DoSubspaceTileRemap_Loop:
 DoSubspaceTileRemap_CheckCreateMushroom:
 	SEC
 	SBC #BackgroundTile_SubspaceMushroom1
+IFNDEF CUSTOM_MUSH
 	TAY
 	LDA Mushroom1Pulled, Y
 	BNE DoSubspaceTileRemap_AfterCreateMushroom
-
+ENDIF
+IFDEF CUSTOM_MUSH
+    PHA
+    TAY
+    TAX
+    LDA InSubspaceOrJar
+    CMP #$02
+    BNE ++
+    JSR GetMushFlag_Bitmask
+    JSR ChkFlagLevel
+    BNE +
+++
+    PLA
+    CLC
+    ADC #BackgroundTile_SubspaceMushroom1
+    TAY
+	JMP DoSubspaceTileRemap_AfterCreateMushroom + 2
++   PLA
+    TAY
+ENDIF
 	LDX byte_RAM_7
 	JSR CreateSubspaceMushroomObject
 
@@ -5094,6 +5114,42 @@ ResetPPUScrollHi_Exit_Bank6:
 ; - `Y`: Which mushroom (0 or 1)
 ;
 CreateSubspaceMushroomObject:
+IFDEF CUSTOM_MUSH
+	TXA
+	PHA
+    TYA
+    TAX
+IFDEF CUSTOM_MUSH_LOOP_MUSH
+-   LDA EnemyState, X
+    CMP #EnemyState_Alive
+    BEQ +
+	INX
+    JMP -
++  
+ENDIF
+    STX byte_RAM_12
+	LDA byte_RAM_7
+	AND #$F0
+	STA ObjectYLo, X
+	LDA byte_RAM_7
+	ASL A
+	ASL A
+	ASL A
+	ASL A
+	STA ObjectXLo, X
+	LDA #$0A
+	STA ObjectXHi, X
+    LDA #$00
+	STA ObjectYHi, X
+	LDA #Enemy_Mushroom
+	STA ObjectType, X
+	LDA #$01
+	STA EnemyState, X
+	STY EnemyVariable, X
+    LDA PlayerLevelPowerup_1, Y
+    STA MushroomEffect, X
+ENDIF
+IFNDEF CUSTOM_MUSH
 	TXA
 	PHA
 	AND #$F0
@@ -5104,25 +5160,17 @@ CreateSubspaceMushroomObject:
 	ASL A
 	ASL A
 	STA ObjectXLo
-
-	; Subspace is page `$0A`.
 	LDA #$0A
 	STA ObjectXHi
 	LDX #$00
 	STX byte_RAM_12
 	STX ObjectYHi
-
-	; Create a living fungus.
-	; Even most of this routine uses an enemy slot offset, the next few lines assume slot 0.
-	; We just set `X` to 0, so this is a safe enough assumption.
 	LDA #Enemy_Mushroom
 	STA ObjectType
-	LDA #EnemyState_Alive
+	LDA #$01
 	STA EnemyState
-	; Keep track of which mushroom so that you can't collect it twice.
 	STY EnemyVariable
-
-	; Reset various object timers and attributes
+ENDIF
 	LDA #$00
 	STA EnemyTimer, X
 	STA EnemyArray_B1, X
@@ -5135,8 +5183,10 @@ CreateSubspaceMushroomObject:
 	STA EnemyArray_45C, X
 	STA ObjectYVelocity, X
 	STA ObjectXVelocity, X
-
-	; Load various object attributes for a mushroom
+IFDEF CUSTOM_MUSH
+    JSR ProcessCustomPowerup    
+ENDIF
+IFNDEF CUSTOM_MUSH
 	LDY ObjectType, X
 	LDA ObjectAttributeTable, Y
 	AND #$7F
@@ -5149,9 +5199,7 @@ CreateSubspaceMushroomObject:
 	STA EnemyArray_492, X
 	LDA #$FF
 	STA EnemyRawDataOffset, X
-
-	; Restore X to its previous value
+ENDIF
 	PLA
 	TAX
-
 	RTS
