@@ -119,6 +119,7 @@ DPCMSampleData_BossHurt:
 DPCMSampleDataEnd_BossHurt:
 
 DPCMSampleData_PlayerDeath:
+IFDEF REMOVE_DPCM
 	.db $53,$55,$55,$55,$55,$55,$55,$55,$B5,$FA,$FE,$FF,$3F,$00,$00,$00 ; NOT logged as PCM data!
 	.db $80,$FE,$FF,$0B,$00,$00,$80,$FF,$FF,$FF,$01,$00,$00,$FC,$FF,$FF,$1F,$00 ; $10
 	.db $00,$E0,$FF,$FF,$FF,$00,$00,$00,$FF,$FF,$FF,$07,$00,$00,$E8,$FF,$FF,$1F ; $22
@@ -189,6 +190,7 @@ DPCMSampleData_PlayerDeath:
 	.db $FF,$1F,$00,$00,$E8,$FF,$FF,$17,$00,$00,$74,$FF,$FF,$4B,$00,$00,$74,$FF ; $4DB
 	.db $FF,$15,$04,$00,$69,$7B,$AB,$B5,$AD,$5A,$55,$AB,$AA,$AA,$AA,$2A ; $4ED
 	.db $55,$55 ; $4FD
+ENDIF
 DPCMSampleData_BossDeath: ; is this too early...
 	.db $6B
 DPCMSampleDataEnd_PlayerDeath: ; ...or is this too late?
@@ -262,6 +264,7 @@ DPCMSampleDataEnd_BossDeath:
 
 ; sort of a zapping sound
 DPCMSampleData_Unused:
+IFDEF REMOVE_DPCM
 	.db $FF
 	.db $5B,$02,$C0,$FF,$03,$D0,$FF,$02,$F8,$57,$00,$FB,$2F,$00,$FA,$BF,$01,$00 ; NOT logged as PCM data!
 	.db $FE,$FF,$07,$7E,$02,$00,$C0,$FE,$FF,$7F,$E0,$04,$00,$F4,$FF,$AB,$01,$00 ; $12
@@ -293,6 +296,7 @@ DPCMSampleData_Unused:
 	.db $02,$00,$BA,$FF,$FF,$80,$56,$00,$04,$75,$FB,$FF,$1F,$C0,$56,$00,$84 ; $1D5
 	.db $DA,$7F,$FF,$09,$5C,$04,$40,$ED,$FF,$87,$16,$00,$DA,$FF,$65,$01,$E0 ; $1E6
 	.db $FF,$31,$02,$FA,$CF,$0A,$E0,$7F ; $1F7
+ENDIF
 DPCMSampleDataEnd_Unused:
 
 DPCMSampleData_PlayerHurt:

@@ -39,7 +39,7 @@ COMPATIBILITY = 1
 ; within them to the end, making it easier to add your own code anywhere.
 ; ...but it might also cause problems if data gets relocated
 ; when it isn't properly pointed to.
-; PRESERVE_UNUSED_SPACE = 1
+;PRESERVE_UNUSED_SPACE = 1
 
 
 ; ----------------------------------------
@@ -172,7 +172,8 @@ CUSTOM_LEVEL_RLE = 1
 
 CUSTOM_PLAYER_RENDER = 1
 
-MIGRATE_QUADS = 1
+; MIGRATE_QUADS = 1
+
 
 TRANSITION_INVULN = 1
 
@@ -187,6 +188,8 @@ PLAYER_STUFF_TITLE = 1
 SMALL_HITBOX = 1
 
 DRAW_SECRET = 1
+
+BLOCK_CHECK = 1
 
 CUSTOM_TILE_IDS = 1
 
@@ -207,5 +210,11 @@ CUSTOM_UNUSED = 1
 CUSTOM_MUSH = 1
 
 SHELL_FIX = 1
+
+SCROLL_FIX = 1
+
+PHANTO_CUSTOM = 1
+
+REMOVE_DCPM = 1
 
 .endinl

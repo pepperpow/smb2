@@ -14,8 +14,8 @@ CustomBitFlag_HiJumpBoot = %00000010
 CustomBitFlag_FloatBoots = %00000100
 CustomBitFlag_MasterKey = %00001000
 CustomBitFlag_AirHop = %00010000
-CustomBitFlag_WarpWhistle = %00100000
-CustomBitFlag_WarpSigil = %00100000
+CustomBitFlag_BombGlove = %00100000
+CustomBitFlag_EggGlove = %01000000
 CustomBitFlag_Map = %10000000
 
 CustomBitFlag_KirbyJump = %00000001
@@ -415,7 +415,7 @@ CreateFireballStartSkipInput:
 +y  
 +c
 +x  DEY
-    STY byte_RAM_C5
+    STY ($c5)
     LDA ProjectileNumber
     CMP ProjectileCountData, Y ;; no firing if above/equal limit
     BCS ++
@@ -434,12 +434,12 @@ CreateFireballStartSkipInput:
 ++  JMP +++
 +   INC ProjectileNumber
     LDX byte_RAM_0
-    LDY byte_RAM_C5 ;; if no projectile...
+    LDY ($c5) ;; if no projectile...
     LDA ProjectileData, Y
 	STA ObjectType, X
     JSR EnemyInit_Basic_Bank1 ; Get current object sprite attributes...
 
-+p  LDY byte_RAM_C5 ;; if no projectile...
++p  LDY ($c5) ;; if no projectile...
     LDA ProjectileMeta, Y
     ORA #$80
     STA Enemy_Fireball_Hits, X
@@ -456,33 +456,67 @@ CreateFireballStartSkipInput:
     LDA #$FF
     STA Enemy_Champion, X
     STA MoreEnemyInfo, X
-++  LDY byte_RAM_C5 ;; if no projectile...
+++  LDY ($c5) ;; if no projectile...
     LDA ProjectileTimerData, Y
     STA ProjectileTimer
     TYA
     JSR ProjectileProcess
+---
 +++ RTS
 
+; this is sloppyyyyyyyyyyyyyyyyyyy
 StoreItem:
-	LDA StoredItem
-    BNE +
-    LDX #CustomBitFlag_StoreItem
-    JSR ChkFlagPlayer
+    LDA ProjectileTimer
     BEQ +
-    LDY CurrentCharacter
-    LDA StartingHold, Y
-    BNE +
     JMP +++
 +
+    ; always check for a stored item
+	LDA StoredItem
+    BNE +storedpull
+    ; if no stored item, check for input
     LDA Player1JoypadHeld
     AND #ControllerInput_Up
     BNE +
     JMP +++
 +
-    LDA ProjectileTimer
-    BEQ +
-    JMP SkipOutThrow
-+
+    LDA HoldingItem
+    BEQ +E
+    LDX #CustomBitFlag_StoreItem
+    JSR ChkFlagPlayer
+    BEQ +confirm
++E
+    LDX #CustomBitFlag_EggGlove
+    JSR ChkFlagPlayer2
+    BNE +B
+    LDA CherryCount
+    BEQ ++
+    DEC CherryCount
+    LDA #Enemy_Egg
+    STA StoredItem
+    BNE +confirm
++B
+    LDX #CustomBitFlag_BombGlove
+    JSR ChkFlagPlayer2
+    BNE ++
+    LDA CherryCount
+    BEQ ++
+    DEC CherryCount
+    LDA #Enemy_Bomb
+    STA StoredItem
+    BNE +confirm
+++
+;    LDX #CustomBitFlag_StoreItem
+;    JSR ChkFlagPlayer
+;   LDY CurrentCharacter
+;   LDA StartingHold, Y
+;    BNE +
+    JMP +++
++storedpull
+    LDA Player1JoypadHeld
+    AND #ControllerInput_Up
+    BNE +confirm
+    JMP +++
++confirm
 	LDA StoredItem
     BNE ++
     LDA HoldingItem
@@ -507,6 +541,7 @@ StoreItem:
 	STA EnemyState, X
     LDA #$14
     STA EnemyTimer, X
+    LDA #$30
     STA ProjectileTimer
     LDA ObjectType, X
     STA StoredItem
@@ -549,7 +584,7 @@ StoreItem:
     JMP SkipOutThrow
 +
     STA ObjectType, X
-    LDA #$20
+    LDA #$90
     STA ProjectileTimer
     JSR EnemyInit_Basic_Bank1 ; Get current object sprite attributes...
 	LDA ScreenBoundaryLeftLo
@@ -573,7 +608,7 @@ StoreItem:
     BEQ +o
     CMP #Enemy_Bomb
     BNE +b
-+o  LDA #$50
++o  LDA #$80
 	STA EnemyTimer, X
 +b
     CMP #Enemy_MushroomBlock
@@ -590,3 +625,32 @@ SkipOutThrow:
     PLA
     PLA
     RTS
+
+SnapEnemy:
+	LDA ObjectYLo,X
+	CLC
+	ADC #$08
+	AND #$F0
+	STA ObjectYLo,X
+	BCC SnapEnemyX
+
+	LDA IsHorizontalLevel
+	BNE SnapEnemyX
+    LDA #$1
+
+	STA ObjectXHi,X
+
+SnapEnemyX:
+	LDA ObjectXLo,X
+	CLC
+	ADC #$08
+	AND #$F0
+	STA ObjectXLo,X
+	BCC SnapEnemyExit
+
+	LDA IsHorizontalLevel
+	BEQ SnapEnemyExit
+
+	STA ObjectXHi,X
+SnapEnemyExit:
+	RTS

@@ -2447,6 +2447,71 @@ PlayerControlAcceleration:
 ; player crouch subroutine
 sub_BANK0_8C1A:
 	JSR PlayerWalkJumpAnim
+IFDEF CUSTOM_MUSH
+	LDA Player1JoypadPress
+    BPL +++ ; branch if not pressing A Button
+	LDA PlayerInAir
+    CMP #1
+    BCC +++
+    CMP #2
+    BEQ + 
+    LDX #CustomBitFlag_AirHop
+    JSR ChkFlagPlayer2
+    BNE +
+    LDA HoldingItem
+    BEQ +
+    JSR SkipToThrowCheck
+    LDA HoldingItem
+    BNE +
+    LDA #$0
+	STA ObjectXVelocity, X
+    LDA #$20
+	STA ObjectYVelocity, X
+    INC PlayerInAir
+	JSR PlayerStartJump
+	LDA #SoundEffect2_Jump
+	STA SoundEffectQueue2
+	LDA Player1JoypadPress
+    EOR #ControllerInput_A
+    STA Player1JoypadPress
+    JMP +++
++
+    LDX #CustomBitFlag_SpaceJump
+    JSR ChkFlagPlayer3
+    BNE +
+    LDA PlayerYVelocity
+    BMI +
+    LDA PlayerYVelocity
+    CMP #$30
+    BCS +
+	JSR PlayerStartJump
+    INC PlayerInAir
+	LDA #SoundEffect2_Jump
+	STA SoundEffectQueue2
+	LDA Player1JoypadPress
+    EOR #ControllerInput_A
+    STA Player1JoypadPress
+    JMP +++
++
+    LDX #CustomBitFlag_KirbyJump
+    JSR ChkFlagPlayer3
+    BNE +++
+	JSR PlayerStartJump
+    INC PlayerInAir
+	LDA PlayerYVelocity
+    ASL
+    ROR PlayerYVelocity
+	LDA #SoundEffect2_Jump
+	STA SoundEffectQueue2
+	LDA Player1JoypadPress
+    EOR #ControllerInput_A
+    STA Player1JoypadPress
+    JMP +++
++++
+    JSR Player_FloatJump
+    JSR Player_GroundPound
+	LDA PlayerInAir
+ENDIF
 
 	LDA PlayerInAir
 	BNE ResetPartialCrouchJumpTimer
@@ -2898,6 +2963,10 @@ loc_BANK0_8E05:
 	BIT Player1JoypadPress
 	BVC locret_BANK0_8E41
 
+IFDEF CUSTOM_MUSH
+    JSR StoreItem
+SkipToThrowCheck:
+ENDIF
 	LDA HoldingItem
 	BEQ locret_BANK0_8E41
 
@@ -3318,7 +3387,68 @@ CheckPlayerTileCollision:
 
 	JSR CheckTileUsesCollisionType
 
+IFNDEF BLOCK_CHECK
 	BCC CheckPlayerTileCollision_Exit
+ENDIF
+IFDEF BLOCK_CHECK
+	BCS + 
+    JMP CheckPlayerTileCollision_Exit
++
+    LDA PlayerYVelocity
+    BPL ++
+    LDA PlayerCollision
+    CMP #CollisionFlags_Up
+    BNE ++
+    LDA byte_RAM_0
+	CMP #BackgroundTile_MushroomBlock
+    BNE +
+    LDA HoldingItem
+    BNE +
+	BIT Player1JoypadHeld
+	BVC +
+    LDA #$0
+	STA byte_RAM_9
+    JSR loc_BANK0_9074
+	LDA #$02
+	STA PlayerStateTimer
+    JMP CheckPlayerTileCollision_Exit
++
+	LDA byte_RAM_0
+	CMP #BackgroundTile_POWBlock
+    BNE +
+	JSR CreateEnemy_TryAllSlots_Bank1
+	LDX byte_RAM_0
+	STA byte_RAM_0
+	CPY #$FF
+	BEQ +
+	LDA #$20
+	STA POWQuakeTimer
+	LDA #SoundEffect3_Rumble_B
+	STA SoundEffectQueue3
+	LDA byte_RAM_3
+	STA ObjectXHi, X
+	LDA byte_RAM_4
+	STA ObjectYHi, X
+	LDA byte_RAM_5
+	STA ObjectXLo, X
+	LDA byte_RAM_6
+	STA ObjectYLo, X
+    LDA #$1
+    STA EnemyArray_42F, X
+	LDA #EnemyState_BlockFizzle
+	STA EnemyState, X
+	LDA #$12
+	STA EnemyTimer, X
+	LDA #BackgroundTile_Sky
+	JSR ReplaceTile_Bank0
++
+    LDX #0
+    JMP CheckPlayerTileCollision_UpdatePlayerCollision
+	++
++
+    LDA byte_RAM_0
+	LDX byte_RAM_7
+ENDIF
 
 CheckPlayerTileCollision_CheckSpikes:
 	CMP #BackgroundTile_Spikes
@@ -3503,7 +3633,7 @@ PlayerTileCollision_Climbable_Exit:
 ;   C = whether or not collision type Y is relevant
 ;
 CheckTileUsesCollisionType:
-IFDEF CUSTOM_TILE_IDS
+IFDEF CUSTOM_TILE_IDS_NOT
 	CMP #$D8
 	BCC +
 	JSR CheckCustomSolidness
@@ -8059,4 +8189,8 @@ IFDEF MIGRATE_QUADS
 
 .include "src/systems/tile-quads.asm"
 
+ENDIF
+
+IFDEF CUSTOM_MUSH
+.include "src/extras/player-mods.asm"
 ENDIF

@@ -136,6 +136,15 @@ ENDIF
 	STA SoundEffectQueue2
 
 AreaInitialization_CheckObjectCarriedOver:
+IFDEF PHANTO_CUSTOM
+	LDX #$05
+	STX byte_RAM_12
+	LDA PhantoActivateTimer
+	CMP #$FF
+	BEQ AreaInitialization_KeyCarryOver
+	LDA #$0
+	STA PhantoActivateTimer
+ENDIF
 	LDA ObjectCarriedOver
 	BEQ AreaInitialization_SetEnemyData
 
@@ -183,6 +192,11 @@ AreaInitialization_NonRocketCarryOver:
 
 	PLA
 	CMP #Enemy_Key
+IFDEF CUSTOM_MUSH
+	BEQ AreaInitialization_KeyCarryOver
+    LDA StoredItem
+    CMP #Enemy_Key
+ENDIF
 	BNE AreaInitialization_SetEnemyData
 
 AreaInitialization_KeyCarryOver:
@@ -196,7 +210,9 @@ AreaInitialization_KeyCarryOver:
 	JSR EnemyInit_Basic
 
 	LDA #$00
+IFNDEF PHANTO_CUSTOM
 	STA PhantoActivateTimer
+ENDIF
 	LDA ScreenYLo
 	STA ObjectYLo, X
 	LDA ScreenYHi
@@ -3796,9 +3812,29 @@ EnemyBehavior_BulletAndEgg:
 	JSR ObjectTileCollision
 
 sub_BANK2_9289:
+IFNDEF CUSTOM_MUSH
 	JSR EnemyBehavior_CheckDamagedInterrupt
+ENDIF
+IFDEF CUSTOM_MUSH
+    LDA EnemyVariable, X
+	BEQ ++
+    LDX #CustomBitFlag_BombGlove
+    JSR ChkFlagPlayer2
+	BNE ++
+	LDX byte_RAM_12
+	LDA ObjectAttributes, X
+	EOR #$1
+	STA ObjectAttributes, X
+++
+	LDX byte_RAM_12
+ENDIF
 
 	JSR EnemyBehavior_CheckBeingCarriedTimerInterrupt
+
+IFDEF CUSTOM_MUSH
+    LDA EnemyVariable, X
+    BNE loc_BANK2_929F
+ENDIF
 
 	LDA EnemyArray_B1, X
 	ORA EnemyArray_42F, X
@@ -3815,19 +3851,51 @@ loc_BANK2_9299:
 	STA EnemyArray_B1, X
 
 loc_BANK2_929F:
+IFDEF CUSTOM_MUSH
+	LDA ObjectXVelocity, X
+    BEQ +D
+	LDA EnemyCollision, X
+	AND #CollisionFlags_Right | CollisionFlags_Left | CollisionFlags_Damage
+ENDIF
+IFNDEF CUSTOM_MUSH
 	LDA EnemyCollision, X
 	AND #CollisionFlags_Right | CollisionFlags_Left
+ENDIF
 	BEQ loc_BANK2_92BE
 
 	STA EnemyArray_B1, X
+IFDEF CUSTOM_MUSH
+	LDA ObjectXVelocity, X
+    BEQ +D
+    LDA EnemyVariable, X
+    BNE +D
+ENDIF
 	LDA ObjectType, X
 	CMP #Enemy_Bullet
 	BNE loc_BANK2_92B5
++D
 
 	LDA #EnemyState_Dead
 	STA EnemyState, X
 	INC ObjectYLo, X
 	INC ObjectYLo, X
+IFDEF CUSTOM_MUSH
+    LDA EnemyVariable, X
+    BEQ +
+    LDX #CustomBitFlag_BombGlove
+    JSR ChkFlagPlayer2
+	BNE +
+	LDX byte_RAM_12
+	LDA #EnemyState_BombExploding
+	STA EnemyState, X
+	LDA #$20
+	STA EnemyTimer, X
+	STA SkyFlashTimer
+	LDA #DPCM_DoorOpenBombBom
+	STA DPCMQueue
++
+	LDX byte_RAM_12
+ENDIF
 
 loc_BANK2_92B5:
 	JSR EnemyBehavior_TurnAround
@@ -3925,6 +3993,14 @@ Phanto_AfterDecrementShakeTimer:
 	JSR RenderSprite
 
 	LDY #$01 ; Move away from player
+IFDEF PHANTO_CUSTOM
+	LDA PhantoActivateTimer
+	CMP #$FF
+	BNE +
+	DEY
+	BEQ Phanto_Movement
++
+ENDIF
 	LDA HoldingItem
 	BEQ Phanto_Movement
 
@@ -4010,7 +4086,10 @@ loc_BANK2_937F:
 loc_BANK2_9388:
 	LDY PhantoActivateTimer
 	BEQ Phanto_Activated
-
+IFDEF PHANTO_CUSTOM
+	CPY #$FF
+	BEQ Phanto_Activated
+ENDIF
 	; Hold the timer at $A0
 	CPY #$A0
 	BEQ Phanto_AfterDecrementActivateTimer
@@ -5171,13 +5250,25 @@ EnemyBehavior_Shell_Render:
 
 	LDY EnemyMovementDirection, X
 IFDEF SHELL_FIX
+	LDA EnemyCollision, X
+	AND #CollisionFlags_Damage
+	BEQ +
+	LDA #$0
+	STA ObjectYVelocity, X
++
     LDA ObjectXVelocity, X
     BEQ +
+	CPY #$1
+	BEQ +o
+	CMP ShellSpeed - 1, Y
+	BCS ++
+    JMP ApplyObjectMovement
++o
+	CMP ShellSpeed - 1, Y
+	BCC ++
     JMP ApplyObjectMovement
 +
-    LDA ObjectType, X
-    CMP #Enemy_Shell
-    BNE ++
+	JSR TurnIntoPuffOfSmoke
     JMP ApplyObjectMovement
 ++
 ENDIF
@@ -6055,14 +6146,10 @@ loc_BANK2_9CD9:
 
 	LDA byte_RAM_3
 	STA SpriteDMAArea + $02, Y
-IFNDEF CUSTOM_MUSH
 	STA SpriteDMAArea + $0A, Y
-ENDIF
 	ORA #$40
 	STA SpriteDMAArea + $06, Y
-IFNDEF CUSTOM_MUSH
 	STA SpriteDMAArea + $0E, Y
-ENDIF
 
 locret_BANK2_9CF1:
 	RTS
@@ -6213,7 +6300,7 @@ loc_BANK2_9D53:
 	INX
 	RTS
 
-IFNDEF CUSTOM_MUSH
+;IFNDEF CUSTOM_MUSH
 SetSpriteTiles_24x16:
 	LDA EnemyTilemap2, X
 	STA SpriteDMAArea + 1, Y
@@ -6221,17 +6308,17 @@ SetSpriteTiles_24x16:
 	STA SpriteDMAArea + 5, Y
 	LDA EnemyTilemap2 + 2, X
 	STA SpriteDMAArea + 9, Y
-ENDIF
+;ENDIF
 
-IFDEF CUSTOM_MUSH
-SetSpriteTiles_24x16:
-	LDA SpriteTableCustom2, X
-	STA SpriteDMAArea + 1, Y
-	LDA SpriteTableCustom2 + 1, X
-	STA SpriteDMAArea + 5, Y
-	LDA SpriteTableCustom2 + 2, X
-	STA SpriteDMAArea + 9, Y
-ENDIF
+;IFDEF CUSTOM_MUSH
+;SetSpriteTiles_24x16:
+;	LDA SpriteTableCustom2, X
+;	STA SpriteDMAArea + 1, Y
+;	LDA SpriteTableCustom2 + 1, X
+;	STA SpriteDMAArea + 5, Y
+;	LDA SpriteTableCustom2 + 2, X
+;	STA SpriteDMAArea + 9, Y
+;ENDIF
 
 	LDA byte_RAM_2
 	LSR A
@@ -10869,6 +10956,11 @@ CheckCollisionWithPlayer_NotHeart:
 	CMP #Enemy_Phanto
 	BNE CheckCollisionWithPlayer_NotPhanto
 
+IFDEF PHANTO_CUSTOM
+	LDY PhantoActivateTimer
+	CPY #$FF
+	BEQ CheckCollisionWithPlayer_NotPhanto
+ENDIF
 	LDY PhantoActivateTimer
 	BNE CheckCollisionWithPlayer_Exit
 
@@ -12301,16 +12393,15 @@ IFDEF HEALTH_REVAMP
     LDA #$10
     TAX
 +
-;    PHA
-;    LDA PlayerHealth
-;    BEQ ++
-;    LDX ProjectileType
-;	LDA ProjectileTileHealth, X
-;	STA SpriteDMAArea + 1, Y
-;    PLA
-;    TAX
-;    JMP +++
-;++  PLA
+	PHA
+	LDA CherryCount
+	BEQ +
+	LDA #$a1
+	STA SpriteDMAArea + 1, Y
+	PLA
+	JMP AfterLoadHealthTile
++
+	PLA
 ENDIF
 AreaSecondaryRoutine_HealthBar_Loop:
 	LDA HealthBarTiles, X
@@ -12494,3 +12585,5 @@ DebugCreateObject_Exit:
 	RTS
 
 ENDIF
+
+

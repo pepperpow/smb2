@@ -1513,6 +1513,29 @@ EndOfLevel:
 	LDA #Music2_StopMusic ; Stop music
 	STA MusicQueue2
 
+IFDEF FLAG_SYSTEM
+    LDA Level_Count_Crystals
+    CMP CrystalCondition
+    BCC ++ 
+    LDA World_Count_Bosses 
+    CMP BossCondition 
+    BCC ++
+    ;LDA RescueCondition 
+    ;BEQ +
+    ;LDA CharacterLock_Variable
+    ;BNE ++
+    JMP +
+++  JMP EndOfLevelJump
++   ; Check if we've completed the final level
+	LDA WinLevel
+    CMP #$FF
+    BNE +
+    JMP EndingSceneRoutine
++   CMP CurrentLevel
+    BNE EndOfLevelSlotMachine
+    JMP EndingSceneRoutine
+ENDIF
+
 	; Increase current characters "contribution" counter
 	LDX CurrentCharacter
 	INC CharacterLevelsCompleted, X
@@ -1590,6 +1613,9 @@ loc_BANKF_E7FD:
 	BNE StartSlotMachine
 
 GoToNextLevel:
+IFDEF FLAG_SYSTEM
+	JMP GoToNextLevel_SameWorld
+ENDIF
 	; Check if this is the last level before the next world
 	LDY CurrentWorld
 	LDA WorldStartingLevel + 1, Y
@@ -3158,6 +3184,10 @@ IFDEF TRANSITION_INVULN
 ++  LDA #0
     STA AreaTransitioned_Invuln
 +
+	LDA ProjectileTimer
+	BEQ +
+	DEC ProjectileTimer
++
 ENDIF
 	; If invincible, decrement timer every 8 frames
 	LDY StarInvincibilityTimer
@@ -4332,6 +4362,9 @@ LoadLevelIntoMemoly_NoBank:
 	CLC
 	ADC CurrentLevelArea
 	TAY
+IFDEF FLAG_SYSTEM
+    STA CurrentLevelAreaIndex
+ENDIF
 
 	; Calculate the pointer for the start of the level data.
 	LDA LevelDataPointersHi, Y
@@ -4385,6 +4418,9 @@ CopyLevelDataToMemory:
 	CLC
 	ADC CurrentLevelArea
 	TAY
+IFDEF FLAG_SYSTEM
+    STA CurrentLevelAreaIndex
+ENDIF
 
 	; Calculate the pointer for the start of the level data.
 	LDA LevelDataPointersLo, Y
