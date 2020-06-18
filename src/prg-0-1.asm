@@ -2041,6 +2041,24 @@ LoseALife:
 	STA PlayerAnimationFrame
 	LDY #$01 ; Set game mode to title card
 	DEC ExtraLives
+IFDEF FLAG_SYSTEM
+    LDX IndependentLives
+    BEQ +
+    LDX CurrentCharacter
+    DEC PlayerIndependentLives, X
+    LDA PlayerIndependentLives, X
+    STA ExtraLives
+    BNE ++
+    LDA CharLookupTable, X
+    ORA CharacterLock_Variable
+    STA CharacterLock_Variable
+    CMP #$F
+    BNE ++
+    INY
+    JMP SetGameModeAfterDeath
++   LDA ExtraLives  
+++
+ENDIF
 	BNE SetGameModeAfterDeath
 
 	INY ; If no lives, increase game mode
@@ -2558,6 +2576,9 @@ loc_BANK0_8C3D:
 	BCS loc_BANK0_8C92
 
 	INC CrouchJumpTimer ; increment crouch jump charge
+IFDEF CUSTOM_MUSH
+    JSR Player_PowerCharge
+ENDIF
 	BNE loc_BANK0_8C92
 
 ResetPartialCrouchJumpTimer: ; reset crouch jump timer if it isn't full
@@ -3065,7 +3086,44 @@ loc_BANK0_8E89:
 	ORA PlayerDirection
 	TAY
 	LDA ThrowXVelocity, Y
+IFDEF CUSTOM_MUSH
+    STA PlayerIntermediateValue
+    TXA ;; preserve obj position
+    PHA
+    LDX #CustomBitFlag_PowerThrow
+    LDA #$0
+    JSR ChkFlagPlayer
+    BNE +
+	LDA CrouchJumpTimer ; check if crouch jump is charged
+	CMP #$3C
+	BCC +
+    LDA #0 ; success
+    STA CrouchJumpTimer
+	LDA #SoundEffect1_HawkOpen_WartBarf
+	STA SoundEffectQueue1
+    LDA PlayerDirection
+    BEQ ++
+    LDA #$70
+    STA PlayerIntermediateValue
+    JMP +
+++  LDA #$90
+    STA PlayerIntermediateValue
++   PLA ;; resume obj position
+    TAX
+	LDA byte_RAM_1
+	ASL A
+	ORA PlayerDirection
+	TAY ;; pretty sure this accidentally sets something incorrectly to not reduce object speed
+	LDA #$0
+    CLC
+    ADC PlayerIntermediateValue
 	STA ObjectXVelocity, X
+    LDA #$0
+    STA PlayerIntermediateValue
+ENDIF
+IFNDEF CUSTOM_MUSH
+	STA ObjectXVelocity, X
+ENDIF
 	LDA #$01
 	STA EnemyArray_42F, X
 	LSR A
@@ -3304,6 +3362,9 @@ PlayerTileCollision_CheckJar:
 	JSR TileBehavior_CheckJar
 
 PlayerTileCollision_CheckDamageTile:
+IFDEF CUSTOM_MUSH
+    JSR Player_GroundPoundHit
+ENDIF
 	LDA #$00
 	STA PlayerYVelocity
 	STA PlayerYAcceleration
@@ -4348,6 +4409,42 @@ loc_BANK0_9340:
 
 loc_BANK0_934B:
 	STX PlayerXSubpixel
+IFDEF CUSTOM_MUSH
+	LDA Player1JoypadHeld
+	AND #ControllerInput_Right | ControllerInput_Left
+    BEQ +
+    LDX #CustomBitFlag_WallCling | #CustomBitFlag_WallJump
+    JSR ChkFlagPlayer3
+    BNE +
+    LDA #SpriteAnimation_CustomFrame1
+    STA PlayerAnimationFrame
+    LDA #CustomBitFlag_WallCling
+    AND ($c5), Y
+    BEQ +
+    JSR Player_WallCling
++
+    LDA PlayerInAir
+    BEQ +
+    LDX #CustomBitFlag_WallJump
+    JSR ChkFlagPlayer3
+    BNE +
+	LDA Player1JoypadPress
+	AND #ControllerInput_A
+    BEQ +
+    INC PlayerInAir
+	LDA #SpriteAnimation_Jumping
+	STA PlayerAnimationFrame
+    LDA PlayerDirection
+    BEQ ++
+    LDA #$E0
+    BNE +++
+++
+    LDA #$20
++++
+    STA PlayerXVelocity
+	JSR PlayerStartJump
++
+ENDIF
 
 locret_BANK0_934E:
 	RTS

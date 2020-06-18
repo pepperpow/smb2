@@ -1,5 +1,8 @@
 AreaTransitioned_Invuln = $7603
 CustomSolid = $77a0
+CharacterLock_Variable = $7610
+PlayerIntermediateValue = $76cd
+
 
 PlayerLevelPowerup_1 = $7600
 PlayerLevelPowerup_2 = $7601

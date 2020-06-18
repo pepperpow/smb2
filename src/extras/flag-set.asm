@@ -106,11 +106,11 @@ StartHealth:
 MaxedHealth:
     .db $ff  ;; maxed health
 IndependentLives:
-    .db $0  ;; elimination mode
+    .db $1  ;; elimination mode
 IndependentPlayers:
     .db $0  ;; powerups per player
 CharSelectDeath:
-    .db $2  ;; select death
+    .db $1  ;; select death (0, no select, 1, always select, 2, random select)
 CharSelectAnytime:
     .db $1  ;; select death
 FluteVisit:
@@ -150,6 +150,8 @@ WinLevel:
     .db $FF ;; bosses
 ChampionChance:
     .db $10
+CharLockVar:
+    .BYTE 0
 
 BonusChanceText_PUSH_OTHER_BUTTON:
 	.db $13+4,$22,$87,$13,$DB,$FB,$DC,$DA,$E7,$DC,$DE,$E5,$F7,$FB,$EC,$ED,$DA,$EB,$ED,$FB,$D1,$EE,$E9,$0
@@ -554,3 +556,114 @@ LoadFlagPlayer3:
     STA $c5 + 1
     RTS
 
+
+CharSelectInitialize:
+      LDA CharacterLock_Variable ; check lock var, if 0 load new var
+      CMP #$F
+      BNE +
+      LDA CharLockVar
+      STA CharacterLock_Variable
++     RTS
+
+
+LockCharacterSelectColor:
+      LDA CurrentCharacter
+      PHA
+      TYA
+      PHA
+
+      LDY #3
+      LDA #0 
+      STA CurrentCharacter
+      JMP +
+-     DEC CurrentCharacter
+      LDA CurrentCharacter
+      AND #3
+      CMP #0
+      BEQ +++
++     JSR ChkToNextValidCharacter
+      BNE ++
+      INY
+      INY
+      INY
+      INY
+      JMP     -
+++    LDA     #$0f
+      STA     PPUBuffer_301,Y
+      LDA     #$12
+      INY
+      STA     PPUBuffer_301,Y
+      INY
+      STA     PPUBuffer_301,Y
+      INY
+      STA     PPUBuffer_301,Y
+      INY
+      JMP     -
+
++++   PLA
+      TAY
+      PLA
+      STA CurrentCharacter
+      RTS
+
+ChkToNextValidCharacter:
+      LDA     CurrentCharacter
+      AND     #$3
+      STA     CurrentCharacter
+      TAX
+      LDA     CharLookupTable, X
+      AND     CharacterLock_Variable
+      RTS
+
+; $00 Mario
+; $01 Princess
+; $02 Toad
+; $03 Luigi
+; however on screen
+; $00 Mario
+; $03 Luigi
+; $02 Toad
+; $01 Princess
+CharLookupTable:
+	.db $01 ; Mio 
+	.db $08 ; Pch 
+	.db $04 ; Tod 
+	.db $02 ; Lug 
+
+CustomBeh_UnlockM:
+    LDA #$0F ^ #%0001
+    LDX #0
+    JMP CustomBeh_Unlock
+CustomBeh_UnlockP:
+    LDA #$0F ^ #%1000
+    LDX #1
+    JMP CustomBeh_Unlock
+CustomBeh_UnlockT:
+    LDA #$0F ^ #%0100 ; their respective slot
+    LDX #2
+    JMP CustomBeh_Unlock
+CustomBeh_UnlockL:
+    LDA #$0F ^ #%0010
+    LDX #3
+    JMP CustomBeh_Unlock
+
+CustomBeh_Unlock:
+    AND CharacterLock_Variable
+    CMP CharacterLock_Variable
+    BEQ +++
+    STA CharacterLock_Variable
+    LDA IndependentLives
+    BEQ +
+    LDA ContinueGame + 1 ;; lives
+    CMP PlayerIndependentLives, X
+    BCC ++
+    STA PlayerIndependentLives, X
+    JMP ++
++   LDA ContinueGame + 1 ;; lives
+    CMP PlayerIndependentLives, X
+    BCC ++
+    STA PlayerIndependentLives, X
+++
+    JSR PlayMushGet
++++
+    RTS

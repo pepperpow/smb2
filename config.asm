@@ -217,4 +217,6 @@ PHANTO_CUSTOM = 1
 
 REMOVE_DCPM = 1
 
+NO_CONTINUE = 1
+
 .endinl

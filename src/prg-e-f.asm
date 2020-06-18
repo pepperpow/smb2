@@ -649,6 +649,22 @@ loc_BANKF_E2B2:
 
 	LDA #Music1_CharacterSelect
 	STA MusicQueue1
+IFDEF TEST_FLAG
+    DEC CurrentCharacter
+-   INC CurrentCharacter
+    JSR ChkToNextValidCharacter 
+    BNE -
+    LDA IndependentLives
+    BEQ +
+    LDX CurrentCharacter
+    LDA PlayerIndependentLives, X
+    STA ExtraLives
++
+    LDA CurrentCharacter 
+    CLC
+    ADC #$5
+    JSR Custom_BufferText
+ENDIF
 	LDA CurrentCharacter
 	STA PreviousCharacter
 	LDA CurrentWorld
@@ -706,6 +722,27 @@ loc_BANKF_E30B:
 	LDA CurrentCharacter
 	AND #$03
 	STA CurrentCharacter
+IFDEF TEST_FLAG
+    JSR CharSelectInitialize
+    JSR ChkToNextValidCharacter
+    BNE CharacterSelect_ChangeCharacter
+    LDA IndependentLives
+    BEQ +
+    LDX CurrentCharacter
+    LDA PlayerIndependentLives, X
+    STA ExtraLives
+	JSR DisplayLevelTitleCardText
+    JSR WaitForNMI
++
+    LDA CurrentCharacter 
+    CLC
+    ADC #$5
+    JSR Custom_BufferText
+	LDA #ScreenUpdateBuffer_RAM_301
+	STA ScreenUpdateIndex
+    JSR WaitForNMI
+    JMP loc_BANKF_E311
+ENDIF
 
 loc_BANKF_E311:
 	LDY #$00
@@ -759,6 +796,10 @@ loc_BANKF_E37D:
 	INY
 	DEX
 	BPL loc_BANKF_E37D
+
+IFDEF TEST_FLAG
+    JSR LockCharacterSelectColor
+ENDIF
 
 	LDA #$06
 	STA byte_RAM_A
@@ -864,15 +905,37 @@ SetNumContinues:
 ContinueGame:
 	LDA #$03 ; Number of lives to start
 	STA ExtraLives
+IFDEF FLAG_SYSTEM
+ResetPlayer_Lives:
+    LDY #$03
+-   STA PlayerIndependentLives, Y
+    DEY
+    BPL -
+	JSR CharSelectInitialize
+ENDIF
 
 GoToWorldStartingLevel:
+IFNDEF NO_CONTINUE
 	LDX CurrentWorld
 	LDY WorldStartingLevel, X
 	STY CurrentLevel
 	STY CurrentLevel_Init
+
 	JSR DoCharacterSelectMenu
 
 	JSR InitializeSomeLevelStuff
+ENDIF
+IFDEF NO_CONTINUE
+	LDA #TransitionType_Door
+	STA TransitionType
+	STA TransitionType_Init
+	LDA #$00
+	STA PlayerState
+	STA PlayerState_Init
+	STA StopwatchTimer
+	STA PlayerCurrentSize
+	JSR DoCharacterSelectMenu
+ENDIF
 
 	JSR DisplayLevelTitleCardAndMore
 
@@ -1337,6 +1400,34 @@ loc_BANKF_E665:
 	JSR PauseScreen_Card
 
 AfterDeathJump:
+IFDEF FLAG_SYSTEM
+    LDX CurrentCharacter
+    LDA PlayerIndependentLives, X
+    BNE +
+	JMP CharacterSelectMenu
++
+    LDA CharSelectDeath
+    BEQ +
+    CMP #$2
+    BEQ ++
+	JMP CharacterSelectMenu
+++  LDA CurrentCharacter
+    PHA
+    LDA PseudoRNGValues
+    EOR PseudoRNGValues + 1
+    STA CurrentCharacter
+    JSR ChkToNextValidCharacter
+    BEQ +
+    LDA PseudoRNGValues + 1
+    EOR PseudoRNGValues + 2
+    STA CurrentCharacter
+    JSR ChkToNextValidCharacter
+    BEQ +
+-   DEC CurrentCharacter
+    JSR ChkToNextValidCharacter
+    BNE -
++
+ENDIF
 IFNDEF CHARACTER_SELECT_AFTER_DEATH
 	JMP StartLevelAfterTitleCard
 ENDIF
@@ -1520,10 +1611,10 @@ IFDEF FLAG_SYSTEM
     LDA World_Count_Bosses 
     CMP BossCondition 
     BCC ++
-    ;LDA RescueCondition 
-    ;BEQ +
-    ;LDA CharacterLock_Variable
-    ;BNE ++
+    LDA RescueCondition 
+    BEQ +
+    LDA CharacterLock_Variable
+    BNE ++
     JMP +
 ++  JMP EndOfLevelJump
 +   ; Check if we've completed the final level
@@ -1531,7 +1622,7 @@ IFDEF FLAG_SYSTEM
     CMP #$FF
     BNE +
     JMP EndingSceneRoutine
-+   CMP CurrentLevel
++   CMP CurrentLevelAreaIndex
     BNE EndOfLevelSlotMachine
     JMP EndingSceneRoutine
 ENDIF
@@ -1608,12 +1699,27 @@ loc_BANKF_E7F2:
 	STA ObjectXLo + 5
 	JSR WaitForNMI_TurnOnPPU
 
+IFDEF FLAG_SYSTEM
+    LDA IndependentLives
+    BEQ +
+    LDX CurrentCharacter
+    LDA PlayerIndependentLives, X
+    STA ExtraLives
++
+ENDIF
+
 loc_BANKF_E7FD:
 	LDA SlotMachineCoins
 	BNE StartSlotMachine
 
 GoToNextLevel:
 IFDEF FLAG_SYSTEM
+    LDA IndependentLives
+    BEQ +
+    LDA ExtraLives
+    LDX CurrentCharacter
+    STA PlayerIndependentLives, X
++
 	JMP GoToNextLevel_SameWorld
 ENDIF
 	; Check if this is the last level before the next world

@@ -1,72 +1,32 @@
 
-
-; ChkToNextValidCharacter:
-;       LDA     CurrentCharacter
-;       AND     #$3
-;       STA     CurrentCharacter
-;       TAX
-;       LDA     CharLookupTable, X
-;       AND     CharacterLock_Variable
-;       RTS
-
-; IFDEF PLAYER_STUFF
-; ChampSet:
-;     LDA ObjectType, X
-;     CMP #Enemy_Pidgit
-;     BEQ ++
-;     CMP #Enemy_Key
-;     BEQ ++
-;     CMP #Enemy_CrystalBall
-;     BEQ ++
-;     LDA Enemy_Champion, X
-;     BNE +
-;     LDA PseudoRNGValues + 2 
-;     STA Enemy_Champion, X
-; +
-;     CMP ChampionChance
-;     BCS ++
-;     LDA #ObjAttrib_Palette3
-;     EOR ObjectAttributes, X
-; 	STA ObjectAttributes, X
-;     LDA EnemyArray_46E_Data, Y
-;     ORA #$42 
-;     STA EnemyArray_46E, X
-;     INC EnemyHP, X
-;     SEC
-;     RTS
-; ++  
-;     RTS
-; ENDIF
-
-
-; IFDEF PLAYER_STUFF
-; HandlePlayerProjectileEffect:
-;     TXA
-;     PHA
-;     TYA
-;     PHA
-;     TAX
-;     LDA Enemy_Fireball_Hits, X
-;     AND #ProjChar_PuffEnemy
-; 	BEQ +
-; 	JSR TurnIntoPuffOfSmoke
-; +   LDA Enemy_Fireball_Hits, X
-;     AND #ProjChar_Disappear
-; 	BEQ +
-; 	JSR TurnIntoPuffOfSmoke
-;     LDA #$0
-;     STA EnemyTimer, X
-; +   LDA Enemy_Fireball_Hits, X
-;     AND #ProjChar_Explosion
-; 	BEQ +
-; 	JSR EnemyBehavior_Bomb_Explode
-; +   PLA
-;     TAY
-;     PLA
-;     TAX
-;     RTS
-; ENDIF
-
+ChampSet:
+    LDA ChampionChance
+    BEQ ++
+    LDA ObjectType, X
+    CMP #Enemy_Pidgit
+    BEQ ++
+    CMP #Enemy_Key
+    BEQ ++
+    CMP #Enemy_CrystalBall
+    BEQ ++
+    LDA Enemy_Champion, X
+    BNE +
+    LDA PseudoRNGValues + 2 
+    STA Enemy_Champion, X
++
+    CMP ChampionChance
+    BCS ++
+    LDA #ObjAttrib_Palette3
+    EOR ObjectAttributes, X
+	STA ObjectAttributes, X
+    LDA EnemyArray_46E_Data, Y
+    ORA #$42 
+    STA EnemyArray_46E, X
+    INC EnemyHP, X
+    SEC
+    RTS
+++  
+    RTS
 
 ; IFDEF PLAYER_STUFF
 ; BossDefeatMush:
@@ -104,35 +64,6 @@
 ; +   
 ; 	LDX byte_RAM_12
 ;     RTS
-; ENDIF
-
-; IFDEF EXTENDED_PTR_CONTINUE
-; SetGameModeBonusChanceCustom:
-;     LDA CurrentLevelPage
-;     ASL
-;     TAX
-; 	LDA AreaPointersByPage, X
-;     CMP #$1F
-;     BNE +
-;     LDY #GameMode_Shop
-;     STY GameMode
-;     LDA CurrentLevelPage
-;     STA CurrentLevelEntryPage
-;     STA CurrentLevelEntryPage_Init
-;     RTS
-; +
-;     LDA CurrentLevelPage
-;     ASL
-;     TAX
-;     LDA AreaPointersByPage, X
-;     AND #$20
-;     CMP #$20
-;     BEQ +
-;     RTS
-; +
-; 	LDA #GameMode_BonusChance
-; 	STA GameMode
-; 	RTS
 ; ENDIF
 
 ; ;; other ideas:
@@ -217,34 +148,35 @@ ProcessCustomPowerupAward_NoLookup:
 
  	.dw Normal_Mushroom_BEH ; Mushroom
  	.dw CustomBeh_Flag 
-; 	.dw CustomBeh_Flag 
-; 	.dw CustomBeh_Flag 
-; 	.dw CustomBeh_Flag 
-; 	.dw CustomBeh_Flag 
-; 	.dw CustomBeh_Flag 
-; 	.dw CustomBeh_Flag 
-; 	.dw CustomBeh_Flag 
-; 	.dw CustomBeh_Flag2 
-; 	.dw CustomBeh_Flag2 
-; 	.dw CustomBeh_Flag2 
-; 	.dw CustomBeh_Flag2 ;;key
-; 	.dw CustomBeh_Flag2 
-; 	.dw CustomBeh_Flag2 
-; 	.dw Normal_Mushroom_BEH 
-; 	.dw Normal_Mushroom_BEH 
-;     .dw CustomBeh_Fireball ; $11
-;     .dw CustomBeh_Egg ; $12
-;     .dw CustomBeh_Bomb
-;     .dw CustomBeh_Phanto
-;     .dw CustomBeh_Fry
-;     .dw CustomBeh_Hammer
-;     .dw CustomBeh_Freeze
-;     .dw CustomBeh_Continue
-; 	.dw CustomBeh_UnlockM 
-; 	.dw CustomBeh_UnlockL 
-; 	.dw CustomBeh_UnlockT 
-; 	.dw CustomBeh_UnlockP 
+ 	.dw CustomBeh_Flag 
+ 	.dw CustomBeh_Flag 
+ 	.dw CustomBeh_Flag 
+ 	.dw CustomBeh_Flag 
+ 	.dw CustomBeh_Flag 
+ 	.dw CustomBeh_Flag 
+ 	.dw CustomBeh_Flag 
+ 	.dw CustomBeh_Flag2 
+ 	.dw CustomBeh_Flag2 
+ 	.dw CustomBeh_Flag2 
+ 	.dw CustomBeh_Flag2 ;;key
+ 	.dw CustomBeh_Flag2 
+ 	.dw CustomBeh_Flag2 
+ 	.dw Normal_Mushroom_BEH 
+ 	.dw Normal_Mushroom_BEH 
+;   .dw CustomBeh_Fireball ; $11
+;   .dw CustomBeh_Egg ; $12
+;   .dw CustomBeh_Bomb
+;   .dw CustomBeh_Phanto
+;   .dw CustomBeh_Fry
+;   .dw CustomBeh_Hammer
+;   .dw CustomBeh_Freeze
+;   .dw CustomBeh_Continue
+ 	.dw CustomBeh_UnlockM 
+ 	.dw CustomBeh_UnlockL 
+ 	.dw CustomBeh_UnlockT 
+ 	.dw CustomBeh_UnlockP 
  	.dw CustomBeh_Mushroom_Fragment 
+ 	.dw CustomBeh_Crystal
 ;     ;; leave objects at end, empty data
 
 ; CustomBeh_Continue:
@@ -264,60 +196,17 @@ CustomBeh_Mushroom_Fragment:
 ++  JSR RemoveFromPlayfield
     JSR PlayMushGet
     RTS
+    
+CustomBeh_Crystal:
+    LDX #CustomBitFlag_Crystal
+    JSR ApplyFlagLevel
+    BEQ +
+    INC Level_Count_Crystals
++
+    JSR RemoveFromPlayfield
+    JSR PlayMushGet
+    RTS
 
-; ; $00 Mario
-; ; $01 Princess
-; ; $02 Toad
-; ; $03 Luigi
-; ; however on screen
-; ; $00 Mario
-; ; $03 Luigi
-; ; $02 Toad
-; ; $01 Princess
-; ;CharLookupTable:
-; ;	.db $01 ; Mio 
-; ;	.db $08 ; Pch 
-; ;	.db $04 ; Tod 
-; ;	.db $02 ; Lug 
-; ;ENDIF
-; CustomBeh_UnlockM:
-;     LDA #$0F ^ #%0001
-;     LDX #0
-;     JMP CustomBeh_Unlock
-; CustomBeh_UnlockP:
-;     LDA #$0F ^ #%1000
-;     LDX #1
-;     JMP CustomBeh_Unlock
-; CustomBeh_UnlockT:
-;     LDA #$0F ^ #%0100 ; their respective slot
-;     LDX #2
-;     JMP CustomBeh_Unlock
-; CustomBeh_UnlockL:
-;     LDA #$0F ^ #%0010
-;     LDX #3
-;     JMP CustomBeh_Unlock
-
-; CustomBeh_Unlock:
-;     AND CharacterLock_Variable
-;     STA CharacterLock_Variable
-;     LDA IndependentLives
-;     BEQ +
-;     LDA ContinueGame + 1 ;; lives
-;     CMP PlayerIndependentLives, X
-;     BCC ++
-;     STA PlayerIndependentLives, X
-;     JMP ++
-; +   LDA ContinueGame + 1 ;; lives
-;     CMP PlayerIndependentLives, X
-;     BCC ++
-;     STA PlayerIndependentLives, X
-; ++
-;     LDA RescueCondition
-;     BNE +++
-;     JSR RemoveFromPlayfield
-; +++
-;     JSR PlayMushGet
-;     RTS
 
 Normal_Mushroom_BEH:
     LDA PlayerMaxHealth
@@ -373,194 +262,116 @@ CustomBeh_Flag:
     JSR RemoveFromPlayfield
     RTS
 
-; CustomBeh_Flag2:
-;     TXA
-;     AND #%111
-;     TAX
-;     JSR ShiftBit
-;     TAX
-;     JSR ApplyFlagPlayer2
-;     JSR RemoveFromPlayfield
-;     RTS
+CustomBeh_Flag2:
+    TXA
+    AND #%111
+    TAX
+    JSR ShiftBit
+    TAX
+    JSR ApplyFlagPlayer2
+    JSR RemoveFromPlayfield
+    RTS
 
-; JumpAttack:
-;     LDA PlayerYVelocity
-;     BMI +
-;     CMP #$10
-;     BCC +
-;     JSR LoadFlagPlayer3
-;     LDY CurrentCharacter
-;     LDA (byte_RAM_C5), Y
-;     AND #CustomBitFlag_BounceAll
-;     BNE +ok
-;     LDA (byte_RAM_C5), Y
-;     AND #CustomBitFlag_BounceJump
-;     BEQ +o
-;     LDA PlayerAnimationFrame
-;     CMP #SpriteAnimation_Jumping
-;     BEQ +ok
-;     JMP +
-; +o
-;     LDA (byte_RAM_C5), Y
-;     AND #CustomBitFlag_GroundPound
-;     BEQ +o
-;     LDA Player1JoypadHeld
-;     AND #ControllerInput_Down
-;     BEQ +
-;     LDA CrushTimer
-;     CMP #$08
-;     BCS +ok
-;     LDA #$0
-;     STA CrushTimer
-;     JMP +
-; +o
-;     JMP +
-; +ok
-;     LDA #$0
-;     STA CrushTimer
-;     LDA Player1JoypadHeld
-;     AND #ControllerInput_A
-;     BEQ ++
-;     LDA #$A0
-;     STA PlayerYVelocity
-;     BNE +++
-; ++  LDA #$C0
-;     STA PlayerYVelocity
-; +++ LDX byte_RAM_12
-;     INX
-;     LDY #$14
-;     JSR DamageEnemy_NoProjectile
-; 	LDX byte_RAM_ED
-;     PLA
-;     PLA
-;     RTS
-; +
-;     RTS
-
-; AwardHealth:
-;     PHA ;; award one extra health to a full stack, but only if we aren't farming
-;     CMP ProjectileType
-;     BEQ +o
-;     LDA #$0
-;     STA PlayerCurrentSize
-; 	LDA #$06
-; 	STA PlayerStateTimer
-; 	LDA #PlayerState_ChangingSize
-; 	STA PlayerState
-; 	LDA PlayerHealth
-;     CMP #$FF
-;     BEQ +
-;     INC PlayerMaxHealth
-;     INC PlayerMaxHealth
-;     LSR
-;     LSR
-;     LSR
-;     LSR
-;     CMP PlayerMaxHealth
-;     BCS ++
-;     LDA PlayerHealth
-; 	CLC
-; 	ADC #$10
-;     STA PlayerHealth
-; ++  DEC PlayerMaxHealth
-;     DEC PlayerMaxHealth
-;     JMP +
-; +o  LDA #SoundEffect1_CherryGet
-; 	STA SoundEffectQueue1
-; +   PLA
-;     RTS
-
-; CustomBeh_Fireball:
-;     LDA #$1
-;     JSR AwardHealth
-;     STA ProjectileType
-; --  LDX #0
-;     JSR RptPaletteCustom
-;     RTS
-
-; CustomBeh_Egg:
-;     LDA #$2
-;     JSR AwardHealth
-;     STA ProjectileType
-; -   LDX #8
-;     JSR RptPaletteCustom
-;     RTS
-
-; CustomBeh_Bomb:
-;     LDA #$3
-;     JSR AwardHealth
-;     STA ProjectileType
-;     JMP -
-
-; CustomBeh_Phanto:
-;     LDA #$4
-;     JSR AwardHealth
-;     STA ProjectileType
-;     JMP -
-
-; CustomBeh_Fry:
-;     LDA #$5
-;     JSR AwardHealth
-;     STA ProjectileType
-;     JMP --
-
-; CustomBeh_Hammer:
-;     LDA #$9
-;     JSR AwardHealth
-;     STA ProjectileType
-;     JMP --
-
-; CustomBeh_Freeze:
-;     LDA #$D
-;     JSR AwardHealth
-;     STA ProjectileType
-;     JMP --
+JumpAttack:
+    LDA PlayerYVelocity
+    BMI +
+    CMP #$10
+    BCC +
+    JSR LoadFlagPlayer3
+    LDY CurrentCharacter
+    LDA ($c5), Y
+    AND #CustomBitFlag_BounceAll
+    BNE +ok
+    LDA ($c5), Y
+    AND #CustomBitFlag_BounceJump
+    BEQ +o
+    LDA PlayerAnimationFrame
+    CMP #SpriteAnimation_Jumping
+    BEQ +ok
+    JMP +
++o
+    LDA ($c5), Y
+    AND #CustomBitFlag_GroundPound
+    BEQ +o
+    LDA Player1JoypadHeld
+    AND #ControllerInput_Down
+    BEQ +
+    LDA CrushTimer
+    CMP #$08
+    BCS +ok
+    LDA #$0
+    STA CrushTimer
+    JMP +
++o
+    JMP +
++ok
+    LDA #$0
+    STA CrushTimer
+    LDA Player1JoypadHeld
+    AND #ControllerInput_A
+    BEQ ++
+    LDA #$A0
+    STA PlayerYVelocity
+    BNE +++
+++  LDA #$C0
+    STA PlayerYVelocity
++++ LDX byte_RAM_12
+    INX
+    LDY #$14
+    JSR DamageEnemySingle
+	LDX byte_RAM_ED
+    PLA
+    PLA
+    RTS
++
+    RTS
 
 
-; CustomCopyChar:
-;       LDA     #PRGBank_A_B
-;       JSR     ChangeMappedPRGBank
-; CharSel:
-;       LDA     CurrentCharacter
-;       STA PreviousCharacter
-;       TAX
-;       LDY     StatOffsets,X
-;       LDX     #0
+
+CustomCopyChar:
+      LDA     #PRGBank_A_B
+      JSR     ChangeMappedPRGBank
+CharSel:
+      LDA     CurrentCharacter
+      STA PreviousCharacter
+      TAX
+      LDY     StatOffsets,X
+      LDX     #0
 
 
-; RptStats:
-;       LDA     MarioStats,Y
-;       STA     PickupSpeedAnimation,X
-;       INY
-;       INX
-;       CPX     #$17
-;       BCC     RptStats
-; GetCharBit:
-;       LDA     CurrentCharacter
-;       ASL     A
-;       ASL     A
-;       TAX
-;       JSR     RptPalette
+RptStats:
+      LDA     MarioStats,Y
+      STA     PickupSpeedAnimation,X
+      INY
+      INX
+      CPX     #$17
+      BCC     RptStats
+GetCharBit:
+      LDA     CurrentCharacter
+      ASL     A
+      ASL     A
+      TAX
+      JSR     RptPalette
 
-; EndCharacterSwap:
-;       LDA     #PRGBank_2_3
-;       JSR     ChangeMappedPRGBank
-;     ; load carry offsets
-; 	; Copy the character-specific FINAL carrying heights into memory
-; 	LDY CurrentCharacter
-; 	LDA CarryYOffsetBigLo, Y
-; 	STA ItemCarryYOffsetsRAM
-; 	LDA CarryYOffsetSmallLo, Y
-; 	STA ItemCarryYOffsetsRAM + $07
-; 	LDA CarryYOffsetBigHi, Y
-; 	STA ItemCarryYOffsetsRAM + $0E
-; 	LDA CarryYOffsetSmallHi, Y
-; 	STA ItemCarryYOffsetsRAM + $15
-;       LDA     #PRGBank_0_1
-;       JSR     ChangeMappedPRGBank
-; 	; update chr for character
-; 	JSR LoadCharacterCHRBanks
-;     RTS
+EndCharacterSwap:
+      LDA     #PRGBank_2_3
+      JSR     ChangeMappedPRGBank
+    ; load carry offsets
+	; Copy the character-specific FINAL carrying heights into memory
+	LDY CurrentCharacter
+	LDA CarryYOffsetBigLo, Y
+	STA ItemCarryYOffsetsRAM
+	LDA CarryYOffsetSmallLo, Y
+	STA ItemCarryYOffsetsRAM + $07
+	LDA CarryYOffsetBigHi, Y
+	STA ItemCarryYOffsetsRAM + $0E
+	LDA CarryYOffsetSmallHi, Y
+	STA ItemCarryYOffsetsRAM + $15
+      LDA     #PRGBank_0_1
+      JSR     ChangeMappedPRGBank
+	; update chr for character
+	JSR LoadCharacterCHRBanks
+    RTS
 
 ; CustomPalette:
 ; 	.db $0F,$01,$16,$27
@@ -584,20 +395,20 @@ CustomBeh_Flag:
 ; +
 ;       RTS
 
-; RptPalette:
-;       LDY #0
-;   -
-;       LDA     MarioPalette,X
-;       STA     RestorePlayerPalette0,Y
-;       INX
-;       INY
-;       CPY     #4
-;       BNE     -
-;       LDA SkyFlashTimer
-;       BNE +
-;       INC     SkyFlashTimer
-; +
-;       RTS
+RptPalette:
+      LDY #0
+  -
+      LDA     MarioPalette,X
+      STA     RestorePlayerPalette0,Y
+      INX
+      INY
+      CPY     #4
+      BNE     -
+      LDA SkyFlashTimer
+      BNE +
+      INC     SkyFlashTimer
++
+      RTS
 
 ; IFDEF PLAYER_STUFF
 ; ;; appearances
@@ -622,21 +433,21 @@ ProcessCustomPowerup_NoLookup: ;; setup enum for extra options on compile
 
  	.dw Normal_Mushroom
  	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem ;; set 2 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem 
-; 	.dw CustomObject_PowerItem ; ocarina?
-; 	.dw Normal_Mushroom 
-; 	.dw Normal_Mushroom 
+ 	.dw CustomObject_PowerItem 
+ 	.dw CustomObject_PowerItem ; REPLACE THIS
+ 	.dw CustomObject_PowerItem 
+ 	.dw CustomObject_PowerItem 
+ 	.dw CustomObject_PowerItem 
+ 	.dw CustomObject_PowerItem 
+ 	.dw CustomObject_PowerItem 
+ 	.dw CustomObject_PowerItem ;; set 2 
+ 	.dw CustomObject_PowerItem 
+ 	.dw CustomObject_PowerItem 
+ 	.dw CustomObject_PowerItem 
+ 	.dw CustomObject_PowerItem 
+ 	.dw CustomObject_PowerItem ; UNUSED
+ 	.dw Normal_Mushroom 
+ 	.dw Normal_Mushroom 
 ; 	.dw CustomObject_PowerItem_NoChrSwitch ;; fire
 ; 	.dw CustomObject_PowerItem_NoChrSwitch ;; egg
 ; 	.dw CustomObject_PowerItem_NoChrSwitch ;; bomb
@@ -645,40 +456,40 @@ ProcessCustomPowerup_NoLookup: ;; setup enum for extra options on compile
 ; 	.dw CustomObject_MushHalf ;; hammer
 ; 	.dw CustomObject_PowerItem_NoChrSwitch ;; freeze
 ; 	.dw CustomObject_PowerItem ;; Continue
-; 	.dw CustomObject_RescueHalf ;; unlock m
-; 	.dw CustomObject_RescueHalf ;; unlock l
-; 	.dw CustomObject_RescueHalf ;; unlock t
-; 	.dw CustomObject_RescueHalf ;; unlock p
+ 	.dw CustomObject_RescueHalf ;; unlock m
+ 	.dw CustomObject_RescueHalf ;; unlock l
+ 	.dw CustomObject_RescueHalf ;; unlock t
+ 	.dw CustomObject_RescueHalf ;; unlock p
  	.dw CustomObject_MushHalf ;; mushhalf
-; 	.dw PReplaceItem_Persistent ; key
-; 	.dw PReplaceItem ; coin (one time coin)
-; 	.dw PReplaceItem_Persistent ; shell 
-; 	.dw PReplaceItem ; life (one time life)
-; 	.dw PReplaceItem_Persistent ; star
-; 	.dw PReplaceItem_Persistent ; stop
-; 	.dw PReplaceItem_Persistent ; bomb
-; 	.dw PReplaceItem_Persistent ; crystal (stays persistent, null on spawn anyway)
+ 	.dw CustomObject_PowerItem_NoChrSwitch ; crystal 
+ 	.dw PReplaceItem_Persistent ; key
+ 	.dw PReplaceItem ; coin (one time coin)
+ 	.dw PReplaceItem_Persistent ; shell 
+ 	.dw PReplaceItem ; life (one time life)
+ 	.dw PReplaceItem_Persistent ; star
+ 	.dw PReplaceItem_Persistent ; stop
+ 	.dw PReplaceItem_Persistent ; bomb
 
 
 EnemyCustom_Attributes:
 	.db ObjAttrib_Palette1 | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
  	.db ObjAttrib_Palette1 ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 | ObjAttrib_Mirrored; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 | ObjAttrib_Mirrored; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
 
-; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom  ; SET 2
-; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom  ; SET 2
+ 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
 
 ; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
 ; 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
@@ -689,40 +500,40 @@ EnemyCustom_Attributes:
 ; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
 
 ; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ;; cont
-; 	.db ObjAttrib_Palette3 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom ;; rescue
-; 	.db ObjAttrib_Palette3 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette3 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
-; 	.db ObjAttrib_Palette3 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
- 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
-; 	.db #Enemy_Key
-; 	.db #Enemy_Coin
-; 	.db #Enemy_Shell
-; 	.db #Enemy_Mushroom1up
-; 	.db #Enemy_Starman
-; 	.db #Enemy_Stopwatch
-; 	.db #Enemy_ShyguyPink
-; 	.db #Enemy_CrystalBall
+ 	.db ObjAttrib_Palette3 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom ;; rescue
+ 	.db ObjAttrib_Palette3 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette3 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette3 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
+	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing ; $3F Enemy_Mushroom
+	.db ObjAttrib_Palette1 | ObjAttrib_Mirrored ; $3F FakeCrystal
+ 	.db #Enemy_Key
+ 	.db #Enemy_Coin
+ 	.db #Enemy_Shell
+ 	.db #Enemy_Mushroom1up
+ 	.db #Enemy_Starman
+ 	.db #Enemy_Stopwatch
+ 	.db #Enemy_ShyguyPink
 
 EnemyCustom_TableSprites:
     .db $a5, $a5
 
     .db $e0, $e2 
-;     .db $f2, $f2
-;     .db $f8, $fa
-;     .db $c8, $ca
-;     .db $cc, $cc
-;     .db $a8, $a8
-;     .db $a6, $a6
-;     .db $ec, $ee
+    .db $f2, $f2
+    .db $f8, $fa
+    .db $c8, $ca
+    .db $cc, $cc
+    .db $a8, $a8
+    .db $a6, $a6
+    .db $ec, $ee
 
-;     .db $d8, $da
-;     .db $d4, $d6
-;     .db $d0, $d2
-;     .db $c4, $c6
-;     .db $fe, $fe
-;     .db $f4, $f6
-;     .db $a5, $a5
-;     .db $a5, $a5
+    .db $d8, $da
+    .db $d4, $d6
+    .db $d0, $d2
+    .db $c4, $c6
+    .db $fe, $fe
+    .db $f4, $f6
+    .db $a5, $a5
+    .db $a5, $a5
 
 ;     .db $a4, $a4
 ;     .db $b5, $b9
@@ -733,42 +544,29 @@ EnemyCustom_TableSprites:
 ;     .db $a4, $3f
 
 ;     .db $fc, $fc
-;     .db $e4, $fb 
-;    .db $e6, $fb 
-;     .db $e8, $fb 
-;     .db $ea, $fb 
+     .db $e4, $fb 
+     .db $e6, $fb 
+     .db $e8, $fb 
+     .db $ea, $fb 
      .db $ba, $fb
+     .db $cf, $cf
 ;     ;; leave objects at end, empty data
 
 
-; PReplaceItem:
-;     JSR PReplaceItem_Persistent
-;     JSR RemoveFromPlayfield
-;     RTS
-; PReplaceItem_Persistent:
-;     ;; autoremove from playfield?
-;     ;; turn below into F helper, or load in bank for enemy attribs/init
-;     LDA EnemyCustom_Attributes, X
-;     LDX byte_RAM_12
-; 	STA ObjectType, X
-; IFDEF DISABLED
-;     CMP #Enemy_Mushroom1up
-;     BNE +
-;     LDX #CustomBitFlag_1up 
-;     JSR ApplyFlagLevel
-;     BEQ ++
-;     INC Level_Count_1ups
-;     INC Mushroom1upPulled 
-;     BNE +
-; ++  LDX byte_RAM_12
-;     LDA #$0
-;     STA EnemyState, X
-;     RTS
-; +   LDX byte_RAM_12
-; ENDIF
-;     LDY ObjectType, X
-;     JSR Normal_Mushroom_Spawn
-;     RTS
+PReplaceItem:
+    JSR PReplaceItem_Persistent
+    JSR RemoveFromPlayfield
+    RTS
+PReplaceItem_Persistent:
+    ;; autoremove from playfield?
+    ;; turn below into F helper, or load in bank for enemy attribs/init
+    LDA EnemyCustom_Attributes, X
+    LDX byte_RAM_12
+	STA ObjectType, X
+    LDY ObjectType, X
+    JSR Normal_Mushroom_Spawn
+    LDA ObjectType, X
+    RTS
 
 ; PDoNothing:
 ;     RTS

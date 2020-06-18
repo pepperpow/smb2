@@ -352,7 +352,7 @@ loc_BANKF_F413:
 	ASL A
 	ASL A
 	TAX
-IFDEF PLAYER_STUFF
+IFDEF TEST_FLAG
     LDA PlayerCurrentSize
     BEQ +
     JMP RenderSmallPlayer

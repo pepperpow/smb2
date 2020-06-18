@@ -930,6 +930,9 @@ SetEnemyAttributes:
 	STA EnemyArray_489, X
 	LDA EnemyArray_492_Data, Y
 	STA EnemyArray_492, X
+IFDEF CUSTOM_MUSH
+    JSR ChampSet
+ENDIF
 	RTS
 
 
@@ -1107,6 +1110,7 @@ IFDEF LEVEL_FLAGS
      BEQ +
      INC World_Count_Bosses
  +
+	LDX byte_RAM_12
 ENDIF
 	JMP TurnIntoPuffOfSmoke
 
@@ -2000,6 +2004,11 @@ EnemyDestroy:
 EnemyDestroy_AfterAllowRespawn:
 	LDA #EnemyState_Inactive
 	STA EnemyState, X
+IFDEF CUSTOM_MUSH
+	LDA #$f8
+	STA ObjectXLo, X
+	STA ObjectYLo, X
+ENDIF
 
 EnemyDestroy_Exit:
 	RTS
@@ -3337,7 +3346,16 @@ EnemyBehavior_Mushroom1up:
 ; ---------------------------------------------------------------------------
 
 Award1upMushroom:
+IFDEF TEST_FLAG
+    TXA
+    PHA
+    LDX CurrentCharacter
+    INC PlayerIndependentLives, X
+    PLA
+    TAX
+ELSE
 	INC Mushroom1upPulled
+ENDIF
 	INC ExtraLives
 	BNE loc_BANK2_9050 ; Check if lives overflow. If so, reduce by one again
 
@@ -3392,6 +3410,7 @@ IFDEF LEVEL_FLAGS
 +
     PLA
     TAX
+	LDA CrystalAndHawkmouthOpenSize
 ENDIF
 	BNE EnemyBehavior_CrystalBall_Exit
 
@@ -11060,6 +11079,12 @@ CheckCollisionWithPlayer_NotInvincible:
 	AND #%00000001
 	BNE CheckCollisionWithPlayer_HurtPlayer
 
+IFDEF CUSTOM_MUSH
+    JSR JumpAttack
+	LDX byte_RAM_ED
+	LDY byte_RAM_12
+ENDIF
+
 	; let player land on top
 	JSR DetermineCollisionFlags
 
@@ -11452,6 +11477,21 @@ sub_BANK3_BA5D:
 
 EnemyTakeDamage:
 	DEC EnemyHP - 1, X ; Subtract hit point
+IFDEF CUSTOM_MUSH
+	LDA ObjectXVelocity, Y
+    BPL +
+    CMP #$CA
+    BCC +++ 
+    JMP ++
++   CMP #$36
+    BCS +++
+    JMP ++
++++ 
+DamageEnemySingle:
+    DEC EnemyHP - 1, X
+++
+    LDA EnemyHP - 1, X
+ENDIF
 	BMI EnemyKnockout
 
 	LDA #$21 ; Flash
