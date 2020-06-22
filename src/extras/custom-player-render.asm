@@ -521,6 +521,11 @@ CharacterExtraSheets:
     .db $3D
     .db $3E
     .db $3F
+CharacterExtraSheetsSmall:
+    .db $80
+    .db $81
+    .db $82
+    .db $83
 ExtraFramesOne:
 	.db $FB, $FB
 	.db $FB, $FB

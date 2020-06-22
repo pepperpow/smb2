@@ -16,14 +16,29 @@ ChampSet:
 +
     CMP ChampionChance
     BCS ++
+    INC EnemyHP, X
     LDA #ObjAttrib_Palette3
     EOR ObjectAttributes, X
 	STA ObjectAttributes, X
+IFDEF CUSTOM_MUSH
     LDA EnemyArray_46E_Data, Y
-    ORA #$42 
+    EOR #$40
     STA EnemyArray_46E, X
-    INC EnemyHP, X
-    SEC
+    TXA
+    PHA
+    LDX #CustomBitFlag_PowerGrip
+    JSR ChkFlagPlayer
+	BNE +
+    PLA
+    TAX
+    RTS
++
+    PLA
+    TAX
+ENDIF
+    LDA EnemyArray_46E, X
+    ORA #$02 
+    STA EnemyArray_46E, X
     RTS
 ++  
     RTS
@@ -147,22 +162,23 @@ ProcessCustomPowerupAward_NoLookup:
  	JSR JumpToTableAfterJump
 
  	.dw Normal_Mushroom_BEH ; Mushroom
- 	.dw CustomBeh_Flag 
- 	.dw CustomBeh_Flag 
- 	.dw CustomBeh_Flag 
- 	.dw CustomBeh_Flag 
- 	.dw CustomBeh_Flag 
- 	.dw CustomBeh_Flag 
- 	.dw CustomBeh_Flag 
- 	.dw CustomBeh_Flag 
- 	.dw CustomBeh_Flag2 
- 	.dw CustomBeh_Flag2 
- 	.dw CustomBeh_Flag2 
- 	.dw CustomBeh_Flag2 ;;key
- 	.dw CustomBeh_Flag2 
- 	.dw CustomBeh_Flag2 
- 	.dw Normal_Mushroom_BEH 
- 	.dw Normal_Mushroom_BEH 
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem ; wow
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem
+    .dw PlaceInventoryItem ; mushinventory
 ;   .dw CustomBeh_Fireball ; $11
 ;   .dw CustomBeh_Egg ; $12
 ;   .dw CustomBeh_Bomb
@@ -184,6 +200,102 @@ ProcessCustomPowerupAward_NoLookup:
 ;     JSR RemoveFromPlayfield
 ;     JSR PlayMushGet
 ;     RTS 
+PlaceInventoryItem:
+    TXA
+    LDY #$FF
+-   INY
+    CPY #$3
+    BEQ PlaceInventoryItem_Full
+    LDA PlayerInventory, Y
+    BNE -
+    TXA
+    STA PlayerInventory, Y
+    CMP #$11 ; undo mushroom, make this less specific
+    BNE +
+    JSR Normal_Mushroom_BEH
++
+    BNE ResetPlayerAbility
+
+PlaceInventoryItem_Full:
+    LDY ReplaceItemSlot
+    CPY #$3
+    BCC +
+    LDY #$0
+    +
+    LDA PlayerInventory, Y
+    PHA
+    TXA
+    STA PlayerInventory, Y
+    CMP #$11 ; add mushroom, make this less specific
+    BNE +
+    JSR Normal_Mushroom_BEH
++
+    PLA
+    CMP #$11 ; undo mushroom, make this less specific
+    BNE +
+    DEC PlayerMaxHealth
+    PHA
+    JSR RestorePlayerToFullHealth
+    PLA
++
+    INY
+    STY ReplaceItemSlot
+    PHA
+    JSR ProcessCustomPowerup_NoLookup
+    LDX byte_RAM_12
+    LDA #EnemyState_Alive
+    STA EnemyState, X
+    LDA #Enemy_Mushroom
+    STA ObjectType, X
+    LDA #$D0
+    STA ObjectYVelocity, X
+    STA SubspaceTimer
+    LDA EnemyVariable, X
+    TAY
+    PLA
+    STA MushroomEffect, Y
+; this sucks this sucks applying a flag uses every register!! ahhH
+ResetPlayerAbility:
+    LDY #$8
+    LDA #$0
+-   DEY
+    STA Player_Bit_Flags, Y
+    BNE -
+    LDX PlayerInventory
+    JSR ApplyPlayerAbility
+    LDX PlayerInventory + 1
+    JSR ApplyPlayerAbility
+    LDX PlayerInventory + 2
+    JSR ApplyPlayerAbility
+    RTS
+
+ApplyPlayerAbility:
+    BEQ ++
+    CPX #$8
+    BCS +
+    JSR CustomBeh_Flag
+    RTS
++   CPX #$11
+    BNE +
+    ; INC PlayerMaxHealth
+    BEQ ++
++   JSR CustomBeh_Flag2
+++  RTS
+
+LoadStartingInventory:
+    LDY #$0
+-   LDA StartingEquipment, Y
+    STA PlayerInventory, Y
+    CMP #$11 ; add mushroom, make this less specific
+    BNE +
+    JSR Normal_Mushroom_BEH
++   INY
+    CPY #$3
+    BNE -
+    JSR ResetPlayerAbility
+    RTS
+
+
 
 CustomBeh_Mushroom_Fragment:
     INC MushroomFragments
@@ -213,7 +325,7 @@ Normal_Mushroom_BEH:
     BMI ++
 	INC PlayerMaxHealth
     INC Level_Count_MushCount
-    JSR RemoveFromPlayfield
+    ;JSR RemoveFromPlayfield
     LDA PlayerMaxHealth
     CMP MaxedHealth
     BCC + 
@@ -259,7 +371,6 @@ CustomBeh_Flag:
     JSR ShiftBit
     TAX
     JSR ApplyFlagPlayer
-    JSR RemoveFromPlayfield
     RTS
 
 CustomBeh_Flag2:
@@ -269,63 +380,7 @@ CustomBeh_Flag2:
     JSR ShiftBit
     TAX
     JSR ApplyFlagPlayer2
-    JSR RemoveFromPlayfield
     RTS
-
-JumpAttack:
-    LDA PlayerYVelocity
-    BMI +
-    CMP #$10
-    BCC +
-    JSR LoadFlagPlayer3
-    LDY CurrentCharacter
-    LDA ($c5), Y
-    AND #CustomBitFlag_BounceAll
-    BNE +ok
-    LDA ($c5), Y
-    AND #CustomBitFlag_BounceJump
-    BEQ +o
-    LDA PlayerAnimationFrame
-    CMP #SpriteAnimation_Jumping
-    BEQ +ok
-    JMP +
-+o
-    LDA ($c5), Y
-    AND #CustomBitFlag_GroundPound
-    BEQ +o
-    LDA Player1JoypadHeld
-    AND #ControllerInput_Down
-    BEQ +
-    LDA CrushTimer
-    CMP #$08
-    BCS +ok
-    LDA #$0
-    STA CrushTimer
-    JMP +
-+o
-    JMP +
-+ok
-    LDA #$0
-    STA CrushTimer
-    LDA Player1JoypadHeld
-    AND #ControllerInput_A
-    BEQ ++
-    LDA #$A0
-    STA PlayerYVelocity
-    BNE +++
-++  LDA #$C0
-    STA PlayerYVelocity
-+++ LDX byte_RAM_12
-    INX
-    LDY #$14
-    JSR DamageEnemySingle
-	LDX byte_RAM_ED
-    PLA
-    PLA
-    RTS
-+
-    RTS
-
 
 
 CustomCopyChar:
@@ -434,7 +489,7 @@ ProcessCustomPowerup_NoLookup: ;; setup enum for extra options on compile
  	.dw Normal_Mushroom
  	.dw CustomObject_PowerItem 
  	.dw CustomObject_PowerItem 
- 	.dw CustomObject_PowerItem ; REPLACE THIS
+ 	.dw CustomObject_PowerItem ; GRIP
  	.dw CustomObject_PowerItem 
  	.dw CustomObject_PowerItem 
  	.dw CustomObject_PowerItem 
@@ -445,9 +500,10 @@ ProcessCustomPowerup_NoLookup: ;; setup enum for extra options on compile
  	.dw CustomObject_PowerItem 
  	.dw CustomObject_PowerItem 
  	.dw CustomObject_PowerItem 
- 	.dw CustomObject_PowerItem ; UNUSED
- 	.dw Normal_Mushroom 
- 	.dw Normal_Mushroom 
+ 	.dw CustomObject_PowerItem ; BOMB
+ 	.dw CustomObject_PowerItem ; EGG
+ 	.dw CustomObject_PowerItem ; Ocarina
+ 	.dw Normal_Mushroom ; Inventory Mushroom
 ; 	.dw CustomObject_PowerItem_NoChrSwitch ;; fire
 ; 	.dw CustomObject_PowerItem_NoChrSwitch ;; egg
 ; 	.dw CustomObject_PowerItem_NoChrSwitch ;; bomb
@@ -488,8 +544,10 @@ EnemyCustom_Attributes:
  	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
  	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
  	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
  	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
- 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
+
+	.db ObjAttrib_Palette1 | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
 
 ; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
 ; 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
@@ -519,7 +577,7 @@ EnemyCustom_TableSprites:
 
     .db $e0, $e2 
     .db $f2, $f2
-    .db $f8, $fa
+    .db $c0, $f8
     .db $c8, $ca
     .db $cc, $cc
     .db $a8, $a8
@@ -531,10 +589,11 @@ EnemyCustom_TableSprites:
     .db $d0, $d2
     .db $c4, $c6
     .db $fe, $fe
+    .db $c0, $f0
+    .db $c0, $c2
     .db $f4, $f6
-    .db $a5, $a5
-    .db $a5, $a5
 
+    .db $a5, $a5
 ;     .db $a4, $a4
 ;     .db $b5, $b9
 ;     .db $db, $db
@@ -602,6 +661,8 @@ Normal_Mushroom_Spawn:
     STA SpriteTableCustom1, Y
     LDA EnemyCustom_TableSprites + 1, X
     STA SpriteTableCustom1 + 1, Y
+    LDA #$0
+    STA EnemyMovementDirection, Y
     RTS
 
 CustomObject_RescueHalf:
@@ -627,6 +688,8 @@ CustomObject_MushHalf:
     RTS
 
 CustomDestroyAll:
+    TXA
+    PHA
     LDA #PRGBank_2_3
     JSR ChangeMappedPRGBankWithoutSaving
     LDA byte_RAM_E
@@ -636,7 +699,7 @@ CustomDestroyAll:
     STA byte_RAM_E
     LDA MMC3PRGBankTemp
     JSR ChangeMappedPRGBank
-    LDA MushroomEffect, X
+    PLA
     TAX
     RTS
 

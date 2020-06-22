@@ -207,6 +207,7 @@ WorldStartingLevel:
 	.db $12
 	.db $14
 
+IFNDEF TEST_FLAG
 PlayerSelectMarioSprites1:
 	.db $8F, $00, $00, $48
 	.db $8F, $00, $40, $50
@@ -254,6 +255,56 @@ PlayerSelectPrincessSprites2:
 	.db $8F, $2A, $03, $B0
 	.db $9F, $2C, $03, $A8
 	.db $9F, $2E, $03, $B0
+ENDIF
+IFDEF TEST_FLAG
+PlayerSelectMarioSprites1:
+	.db $8F, $00, $00, $48
+	.db $8F, $02, $00, $50
+	.db $9F, $04, $00, $48
+	.db $9F, $06, $00, $50
+
+PlayerSelectLuigiSprites1:
+	.db $8F, $08, $01, $68
+	.db $8F, $0a, $01, $70
+	.db $9F, $0c, $01, $68
+	.db $9F, $0e, $01, $70
+
+PlayerSelectToadSprites1:
+	.db $8F, $10, $02, $88
+	.db $8F, $12, $02, $90
+	.db $9F, $14, $02, $88
+	.db $9F, $16, $02, $90
+
+PlayerSelectPrincessSprites1:
+	.db $8F, $18, $03, $A8
+	.db $8F, $1a, $03, $B0
+	.db $9F, $1c, $03, $A8
+	.db $9F, $1e, $03, $B0
+
+PlayerSelectMarioSprites2:
+	.db $8F, $20, $00, $48
+	.db $8F, $22, $00, $50
+	.db $9F, $24, $00, $48
+	.db $9F, $26, $00, $50
+
+PlayerSelectLuigiSprites2:
+	.db $8F, $28, $01, $68
+	.db $8F, $2A, $01, $70
+	.db $9F, $2C, $01, $68
+	.db $9F, $2E, $01, $70
+
+PlayerSelectToadSprites2:
+	.db $8F, $30, $02, $88
+	.db $8F, $32, $02, $90
+	.db $9F, $34, $02, $88
+	.db $9F, $36, $02, $90
+
+PlayerSelectPrincessSprites2:
+	.db $8F, $38, $03, $A8
+	.db $8F, $3A, $03, $B0
+	.db $9F, $3C, $03, $A8
+	.db $9F, $3E, $03, $B0
+ENDIF
 
 PlayerSelectSpriteIndexes:
 	.db $00, $30, $20, $10
@@ -585,6 +636,12 @@ DisplayLevelTitleCardAndMore_TitleCardPaletteLoop:
 	JSR WaitForNMI_TurnOnPPU
 
 	JSR RestorePlayerToFullHealth
+IFDEF FLAG_SYSTEM
+	LDA PlayerHealth
+	CLC
+	ADC FreeHealth
+	STA PlayerHealth
+ENDIF
 
 	; Pause for the title card
 	LDA #$50
@@ -825,6 +882,11 @@ CharacterSelectMenuLoop:
 	AND #ControllerInput_A
 	BNE loc_BANKF_E3AE
 
+IFDEF FLAG_SYSTEM
+	LDA CurrentCharacter
+	STA PreviousCharacter
+ENDIF
+
 	JMP loc_BANKF_E2E8
 
 ; ---------------------------------------------------------------------------
@@ -900,6 +962,9 @@ StartGame:
 SetNumContinues:
 	LDA #$02 ; Number of continues on start
 	STA Continues
+IFDEF CUSTOM_MUSH
+	JSR LoadStartingInventory
+ENDIF
 
 ; We return here after picking "CONTINUE" from the game over menu.
 ContinueGame:
@@ -911,6 +976,8 @@ ResetPlayer_Lives:
 -   STA PlayerIndependentLives, Y
     DEY
     BPL -
+	LDA #$F
+	STA CharacterLock_Variable
 	JSR CharSelectInitialize
 ENDIF
 
@@ -926,12 +993,14 @@ IFNDEF NO_CONTINUE
 	JSR InitializeSomeLevelStuff
 ENDIF
 IFDEF NO_CONTINUE
+StartingTransition:
 	LDA #TransitionType_Door
 	STA TransitionType
 	STA TransitionType_Init
 	LDA #$00
 	STA PlayerState
 	STA PlayerState_Init
+	STA InSubspaceOrJar
 	STA StopwatchTimer
 	STA PlayerCurrentSize
 	JSR DoCharacterSelectMenu
@@ -2561,7 +2630,7 @@ IFDEF DEBUG
 DebugHook:
 ; Hook into debug routine if select is pressed
 	LDA Player1JoypadPress
-	CMP #ControllerInput_Select
+	CMP #ControllerInput_Select | ControllerInput_Start
 	BNE NMI_Exit
 	LDA #>Debug_Init
 	PHA

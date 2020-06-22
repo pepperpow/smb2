@@ -501,6 +501,21 @@ sub_BANKC_8493:
 	BNE loc_BANKC_84A5
 
 loc_BANKC_849B:
+IFDEF PLAYER_STUFF
+-   TYA
+    LSR
+    LSR
+    TAX
+    LDA CharLookupTable_Ordered_Dream, X  
+    AND CharacterLock_Variable
+    BEQ +
+    LDA #$FF 
+	STA SpriteDMAArea + $10, Y
+    DEY
+    BPL -
+    RTS 
++
+ENDIF
 	LDA MarioDream_BubbleSprites, Y
 	STA SpriteDMAArea, Y
 	DEY
@@ -511,6 +526,26 @@ loc_BANKC_849B:
 ; ---------------------------------------------------------------------------
 
 loc_BANKC_84A5:
+IFDEF PLAYER_STUFF
+-   TYA
+    LSR
+    LSR
+    TAX
+    LDA CharLookupTable_Ordered_Dream, X  
+    AND CharacterLock_Variable
+    BEQ +
+    LDA #$FF 
+	STA SpriteDMAArea + $10, Y
+    DEY
+    BPL -
+    RTS 
+CharLookupTable_Ordered_Dream:
+	.db $01 ; Mio 
+	.db $02 ; Lug 
+	.db $08 ; Pch 
+	.db $04 ; Tod 
++
+ENDIF
 	LDA byte_BANKC_8308, Y
 	STA SpriteDMAArea, Y
 	DEY

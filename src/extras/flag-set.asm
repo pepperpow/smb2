@@ -1,49 +1,5 @@
 ; Flag Set
 ; Takes PTR, 
-Level_Bit_Flags = $7300
-World_Bit_Flags = $73D2
-Level_Count_Discovery = $73E0
-Level_Count_MushCount = $73E1
-Level_Count_Coins = $73E2
-Level_Count_1ups = $73E3
-Level_Count_SubspaceVisits = $73E4
-Level_Count_Unlocks = $73E5
-Level_Count_BigKill = $73E6
-Level_Count_KillCnt = $73E6
-Level_Count_LivesLost = $73E7
-Level_Count_Crystals = $73E8
-Level_Count_Cherries = $73E9
-World_Count_Bosses = $73EF
-CurrentLevelAreaIndex = $73F0
-StatPrintOffset = $73F1
-StatPrintCurOffset = $73F2
-StatPrintDec = $73F3
-StatPrintDecRow = $73F4
-
-PlayerIndependentLives = $73F8
-PlayerIndependentMaxHealth = $73FC
-
-CustomBitFlag_Boss_Defeated = %00000010
-
-CustomBitFlag_Visited = %00000001
-CustomBitFlag_Mush1 = %00000010
-CustomBitFlag_Mush2 = %00000100
-CustomBitFlag_1up = %00001000
-CustomBitFlag_Sub1 = %00010000
-CustomBitFlag_Sub2 = %00100000
-CustomBitFlag_Key = %01000000
-CustomBitFlag_Crystal = %10000000
-
-CustomCharFlag_Shrinking = %00000001
-CustomCharFlag_Running = %00000010
-CustomCharFlag_Fluttering = %00000100
-CustomCharFlag_PeachWalk = %00001000
-CustomCharFlag_WeaponCherry = %00010000
-CustomCharFlag_StoreCherry = %00100000
-CustomCharFlag_AirControl = %01000000
-CustomCharFlag_WideSprite = %10000000
-
-CustomCharFlag_StandStill = %00000001
 
 DokiMode:
     .db %0011  ;; doki
@@ -95,26 +51,16 @@ AccelReduction:
     .db $0
     .db $0
     .db $0
-GBreaker:
-    .db $0  ;; gbreak
-DebugSet:
-    .db $1  ;; debug
-ResetHealth:
-    .db $06  ;; reset health (after slots/boss)
-StartHealth:
-    .db $08  ;; start health
 MaxedHealth:
     .db $ff  ;; maxed health
 IndependentLives:
-    .db $1  ;; elimination mode
+    .db $0  ;; elimination mode
 IndependentPlayers:
     .db $0  ;; powerups per player
 CharSelectDeath:
     .db $1  ;; select death (0, no select, 1, always select, 2, random select)
 CharSelectAnytime:
     .db $1  ;; select death
-FluteVisit:
-    .db $0
 BossMushroom:
     .db $1  ;; select death
 StartingInventory:
@@ -127,6 +73,10 @@ StartingInventory:
     .db $0  ;; select death
     .db $0  ;; select death
     .db %0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+StartingEquipment:
     .db $0  ;; select death
     .db $0  ;; select death
     .db $0  ;; select death
@@ -148,9 +98,11 @@ RescueCondition:
     .db $0  ;; ok
 WinLevel:
     .db $FF ;; bosses
+FreeHealth:
+    .db $00
 ChampionChance:
     .db $10
-CharLockVar:
+CharacterInitialLock:
     .BYTE 0
 
 BonusChanceText_PUSH_OTHER_BUTTON:
@@ -561,7 +513,7 @@ CharSelectInitialize:
       LDA CharacterLock_Variable ; check lock var, if 0 load new var
       CMP #$F
       BNE +
-      LDA CharLockVar
+      LDA CharacterInitialLock
       STA CharacterLock_Variable
 +     RTS
 

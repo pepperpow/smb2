@@ -5,12 +5,13 @@ NewHealthRender:
     PHA
     LDA PlayerHealth
     BEQ ++
-;    LDX ProjectileType
-;    LDA ProjectileTileHealth, X
-;    STA SpriteDMAArea + 1, Y
-;    PLA
-;    TAX
-;    JMP +++
+	LDA CherryCount
+	BEQ ++
+	LDA #$a1
+	STA SpriteDMAArea + 1, Y
+    PLA
+    TAX
+    JMP +++
 ++  PLA
     TAX
 DrawHealthPip:

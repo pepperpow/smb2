@@ -1,31 +1,5 @@
 ;; future proof this file by adding extended tables and space for external abilities
 ;; place "ability checks" in places where applicable, as easy injection sites
-CustomBitFlag_PowerThrow = %00000001
-CustomBitFlag_PowerCharge = %00000010
-CustomBitFlag_PowerWalk = %00000100
-CustomBitFlag_StoreItem = %00001000
-CustomBitFlag_FallDefense = %00010000
-CustomBitFlag_ImmuneFire = %00100000
-CustomBitFlag_ImmuneElec = %01000000
-CustomBitFlag_Secret = %10000000
-
-CustomBitFlag_AllTerrain = %00000001
-CustomBitFlag_HiJumpBoot = %00000010
-CustomBitFlag_FloatBoots = %00000100
-CustomBitFlag_MasterKey = %00001000
-CustomBitFlag_AirHop = %00010000
-CustomBitFlag_BombGlove = %00100000
-CustomBitFlag_EggGlove = %01000000
-CustomBitFlag_Map = %10000000
-
-CustomBitFlag_KirbyJump = %00000001
-CustomBitFlag_Grapple = %00000010
-CustomBitFlag_SpaceJump = %00000100
-CustomBitFlag_BounceJump = %00001000
-CustomBitFlag_BounceAll = %00010000
-CustomBitFlag_GroundPound = %00100000
-CustomBitFlag_WallCling = %01000000
-CustomBitFlag_WallJump = %10000000
 
 CheckMaxHealth:
     LDA PlayerMaxHealth
@@ -53,7 +27,7 @@ Player_PowerWalkInvincibility:
 	LDY CrouchJumpTimer
 	CPY #$3C
     BNE +
-    LDX #CustomBitFlag_PowerWalk
+    LDX #CustomBitFlag_PowerGrip
     LDA #$0
     JSR ChkFlagPlayer
     BNE +
@@ -69,6 +43,9 @@ Player_PowerWalkInvincibility:
 Player_HiJump:
     LDX #CustomBitFlag_HiJumpBoot
     JSR ChkFlagPlayer2
+    BNE +
+	LDA Player1JoypadHeld ; holding jump button to fight physics
+    AND #ControllerInput_Down
     BNE +
     LDA PlayerYVelocity
     SBC #$10

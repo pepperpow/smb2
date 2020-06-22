@@ -1978,8 +1978,14 @@ loc_BANK0_8A26:
 	.dw HandlePlayerState_Dying ; Dying
 	.dw HandlePlayerState_ChangingSize ; Changing size
 
+IFDEF CUSTOM_MUSH
+	.include "src/extras/char-switch-overworld.asm"
+ENDIF
 
 HandlePlayerState_Normal:
+IFDEF CUSTOM_MUSH
+    JSR HandlePlayer_ChangeChar
+ENDIF
 	JSR PlayerGravity
 
 	; player animation frame, crouch jump charging
@@ -2042,22 +2048,7 @@ LoseALife:
 	LDY #$01 ; Set game mode to title card
 	DEC ExtraLives
 IFDEF FLAG_SYSTEM
-    LDX IndependentLives
-    BEQ +
-    LDX CurrentCharacter
-    DEC PlayerIndependentLives, X
-    LDA PlayerIndependentLives, X
-    STA ExtraLives
-    BNE ++
-    LDA CharLookupTable, X
-    ORA CharacterLock_Variable
-    STA CharacterLock_Variable
-    CMP #$F
-    BNE ++
-    INY
-    JMP SetGameModeAfterDeath
-+   LDA ExtraLives  
-++
+	.include "src/extras/lose-a-life-independent-check.asm"
 ENDIF
 	BNE SetGameModeAfterDeath
 
@@ -2108,6 +2099,14 @@ loc_BANK0_8AB5:
 
 loc_BANK0_8AB8:
 	STA PlayerStateTimer
+IFDEF CUSTOM_MUSH
+    LDX #CustomBitFlag_PowerGrip
+    JSR ChkFlagPlayer
+	BNE +
+	LDA #$0
+	STA PlayerStateTimer
++
+ENDIF
 	RTS
 
 ; ---------------------------------------------------------------------------
@@ -2466,69 +2465,7 @@ PlayerControlAcceleration:
 sub_BANK0_8C1A:
 	JSR PlayerWalkJumpAnim
 IFDEF CUSTOM_MUSH
-	LDA Player1JoypadPress
-    BPL +++ ; branch if not pressing A Button
-	LDA PlayerInAir
-    CMP #1
-    BCC +++
-    CMP #2
-    BEQ + 
-    LDX #CustomBitFlag_AirHop
-    JSR ChkFlagPlayer2
-    BNE +
-    LDA HoldingItem
-    BEQ +
-    JSR SkipToThrowCheck
-    LDA HoldingItem
-    BNE +
-    LDA #$0
-	STA ObjectXVelocity, X
-    LDA #$20
-	STA ObjectYVelocity, X
-    INC PlayerInAir
-	JSR PlayerStartJump
-	LDA #SoundEffect2_Jump
-	STA SoundEffectQueue2
-	LDA Player1JoypadPress
-    EOR #ControllerInput_A
-    STA Player1JoypadPress
-    JMP +++
-+
-    LDX #CustomBitFlag_SpaceJump
-    JSR ChkFlagPlayer3
-    BNE +
-    LDA PlayerYVelocity
-    BMI +
-    LDA PlayerYVelocity
-    CMP #$30
-    BCS +
-	JSR PlayerStartJump
-    INC PlayerInAir
-	LDA #SoundEffect2_Jump
-	STA SoundEffectQueue2
-	LDA Player1JoypadPress
-    EOR #ControllerInput_A
-    STA Player1JoypadPress
-    JMP +++
-+
-    LDX #CustomBitFlag_KirbyJump
-    JSR ChkFlagPlayer3
-    BNE +++
-	JSR PlayerStartJump
-    INC PlayerInAir
-	LDA PlayerYVelocity
-    ASL
-    ROR PlayerYVelocity
-	LDA #SoundEffect2_Jump
-	STA SoundEffectQueue2
-	LDA Player1JoypadPress
-    EOR #ControllerInput_A
-    STA Player1JoypadPress
-    JMP +++
-+++
-    JSR Player_FloatJump
-    JSR Player_GroundPound
-	LDA PlayerInAir
+	.include "src/extras/jump-routine-bonus.asm"
 ENDIF
 
 	LDA PlayerInAir
@@ -2639,6 +2576,12 @@ PlayerStartJump:
 	CMP #$02
 	BCC PlayerStartJump_LoadXVelocity
 
+IFDEF CUSTOM_MUSH
+    LDX #CustomBitFlag_AllTerrain
+    JSR ChkFlagPlayer2
+    BEQ PlayerStartJump_LoadXVelocity
+ENDIF
+
 	; Quicksand
 	LDA JumpHeightQuicksand
 	STA PlayerYVelocity
@@ -2688,6 +2631,9 @@ PlayerStartJump_SetYVelocity:
 	TAY
 	LDA JumpHeightStanding, Y
 	STA PlayerYVelocity
+IFDEF CUSTOM_MUSH
+    JSR Player_HiJump
+ENDIF
 
 	LDA JumpFloatLength
 	STA JumpFloatTimer
@@ -2709,6 +2655,12 @@ PlayerGravity:
 	LDA QuicksandDepth
 	CMP #$02
 	BCC loc_BANK0_8CE5
+
+IFDEF CUSTOM_MUSH
+    LDX #CustomBitFlag_AllTerrain
+    JSR ChkFlagPlayer2
+    BEQ loc_BANK0_8CE5
+ENDIF
 
 	LDA GravityQuicksand
 	BNE loc_BANK0_8D13
@@ -3087,39 +3039,7 @@ loc_BANK0_8E89:
 	TAY
 	LDA ThrowXVelocity, Y
 IFDEF CUSTOM_MUSH
-    STA PlayerIntermediateValue
-    TXA ;; preserve obj position
-    PHA
-    LDX #CustomBitFlag_PowerThrow
-    LDA #$0
-    JSR ChkFlagPlayer
-    BNE +
-	LDA CrouchJumpTimer ; check if crouch jump is charged
-	CMP #$3C
-	BCC +
-    LDA #0 ; success
-    STA CrouchJumpTimer
-	LDA #SoundEffect1_HawkOpen_WartBarf
-	STA SoundEffectQueue1
-    LDA PlayerDirection
-    BEQ ++
-    LDA #$70
-    STA PlayerIntermediateValue
-    JMP +
-++  LDA #$90
-    STA PlayerIntermediateValue
-+   PLA ;; resume obj position
-    TAX
-	LDA byte_RAM_1
-	ASL A
-	ORA PlayerDirection
-	TAY ;; pretty sure this accidentally sets something incorrectly to not reduce object speed
-	LDA #$0
-    CLC
-    ADC PlayerIntermediateValue
-	STA ObjectXVelocity, X
-    LDA #$0
-    STA PlayerIntermediateValue
+	.include "src/extras/power-throw-logic.asm"
 ENDIF
 IFNDEF CUSTOM_MUSH
 	STA ObjectXVelocity, X
@@ -3343,6 +3263,17 @@ PlayerTileCollision_CheckInteractiveTiles:
 	AND #$F0
 	STA PlayerYLo
 
+IFDEF CUSTOM_MUSH
+    LDA byte_RAM_A
+    ORA byte_RAM_C
+    BEQ PlayerTileCollision_CheckJar
+    LDX #CustomBitFlag_AllTerrain
+    JSR ChkFlagPlayer2
+    BNE +
+    BEQ PlayerTileCollision_CheckJar
++
+ENDIF
+
 PlayerTileCollision_CheckConveyorTile:
 	LSR byte_RAM_A
 	BCC PlayerTileCollision_CheckSlipperyTile
@@ -3517,6 +3448,15 @@ CheckPlayerTileCollision_CheckSpikes:
 
 	LDA InteractiveTileCollisionTable, X
 	STA byte_RAM_E
+IFDEF CUSTOM_MUSH
+    LDX #CustomBitFlag_AllTerrain
+    JSR ChkFlagPlayer2
+    BNE + 
+	LDA #$0
+	STA byte_RAM_E
++
+	LDX byte_RAM_7
+ENDIF
 	BNE CheckPlayerTileCollision_UpdatePlayerCollision
 
 CheckPlayerTileCollision_CheckIce:
@@ -3784,6 +3724,23 @@ loc_BANK0_9080:
 
 	LDA #$20
 	STA EnemyTimer, X
+IFDEF CUSTOM_MUSH
+    TXA
+    PHA
+    LDX #CustomBitFlag_PowerGrip
+    JSR ChkFlagPlayer
+	BNE +
+    PLA
+    TAX
+	DEC HoldingItem
+	LDA #$10
+	STA PlayerYVelocity
+	LDA #EnemyState_Sand
+	BNE loc_BANK0_90AE
++
+    PLA
+    TAX
+ENDIF
 	LDA #EnemyState_Sand
 
 loc_BANK0_90AE:
@@ -5337,7 +5294,7 @@ IFDEF PLAYER_STUFF_TITLE
       .BYTE $22,$66,4,$FC,$FC,$FC,$20		  
       .BYTE $22,$86,4,$76,$76,$76,$21		  
 FunkyLittleSeedBlock:
-      .BYTE $22, $B, $0F, $DD, $E8, $E8, $EB, $FB, $EB, $DA, $E7, $DD, $E8, $E6, $E2, $F3, $DE, $EB;
+      .BYTE $22, $B, $0F, 'OPEN' + $99, $FB, $EB, $DA, $E7, $DD, $E8, $E6, $E2, $F3, $DE, $EB;
 FunkyLittleSeedBlock2:
       .BYTE $22, $2B, $0F, $e7, $e8, $fb, $e8, $db, $e3, $de, $dc, $ed, $e2, $ef, $de, $fb, $fb, $fb;  
 FunkyLittleSeedBlock3:
@@ -6915,6 +6872,34 @@ EndingScreenUpdateIndex:
 ContributorSpriteZeroOAMData:
 	.db $8C, $FC, $20, $94
 
+IFDEF TEST_FLAG
+ContributorCharacterOAMData:
+	; Mario
+	.db $4F, $00, $20, $50
+	.db $4F, $02, $20, $58
+	.db $5F, $04, $20, $50
+	.db $5F, $06, $20, $58
+	; Luigi
+	.db $4F, $08, $21, $68
+	.db $4F, $0a, $21, $70
+	.db $5F, $0c, $21, $68
+	.db $5F, $0e, $21, $70
+	; Toad
+	.db $4F, $10, $22, $88
+	.db $4F, $12, $22, $90
+	.db $5F, $14, $22, $88
+	.db $5F, $16, $22, $90
+	; Princess1
+	.db $4F, $18, $23, $A0
+	.db $4F, $1a, $23, $A8
+	.db $5F, $1c, $23, $A0
+	.db $5F, $1e, $23, $A8
+CharLookupTable_Ordered:
+	.db $01 ; Mio 
+	.db $02 ; Lug 
+	.db $04 ; Tod 
+	.db $08 ; Pch 
+ELSE
 ContributorCharacterOAMData:
 	; Mario
 	.db $4F, $61, $20, $50
@@ -6936,6 +6921,7 @@ ContributorCharacterOAMData:
 	.db $4F, $8D, $23, $A8
 	.db $5F, $8F, $23, $A0
 	.db $5F, $91, $23, $A8
+ENDIF
 
 
 ;
@@ -6984,10 +6970,35 @@ ContributorScene_SpriteZeroLoop:
 
 	LDY #$3F
 ContributorScene_CharacterLoop:
+IFNDEF TEST_FLAG
 	LDA ContributorCharacterOAMData, Y
 	STA SpriteDMAArea + $10, Y
 	DEY
 	BPL ContributorScene_CharacterLoop
+ENDIF
+IFDEF TEST_FLAG
+    LDA #$31
+    STA SpriteCHR1
+-   TYA
+    LSR
+    LSR
+    LSR
+    LSR
+    TAX
+    LDA CharLookupTable_Ordered, X  
+    AND CharacterLock_Variable
+    BEQ +
+    LDA #$FF 
+	STA SpriteDMAArea + $10, Y
+    DEY
+    BPL -
+    JMP ++
++	LDA ContributorCharacterOAMData, Y
+	STA SpriteDMAArea + $10, Y
+	DEY
+	BPL -
+++
+ENDIF
 
 	LDA #$FF
 	STA PlayerXHi
@@ -8137,6 +8148,16 @@ loc_BANK1_BA9B:
 	; kill if >= this check
 	CPY #$0C
 	BCC loc_BANK1_BAB4
+
+IFDEF CUSTOM_MUSH
+    LDX #CustomBitFlag_AllTerrain
+    JSR ChkFlagPlayer2
+    BNE + 
+	LDA #$0
+	STA QuicksandDepth
+	BEQ loc_BANK1_BAB4
++
+ENDIF
 
 	LDA #$00
 	STA PlayerStateTimer
