@@ -2484,8 +2484,16 @@ loc_BANK0_8C2B:
 	BPL loc_BANK0_8C3D ; branch if not pressing A Button
 
 	INC PlayerInAir
+IFDEF FLAG_SYSTEM
+	LDA HoldingItem
+	BNE +
 	LDA #SpriteAnimation_Jumping
 	STA PlayerAnimationFrame
++
+ELSE
+	LDA #SpriteAnimation_Jumping
+	STA PlayerAnimationFrame
+ENDIF
 	JSR PlayerStartJump
 
 	LDA #SoundEffect2_Jump
@@ -2801,9 +2809,17 @@ PlayerWalkJumpAnim:
 	LDA PlayerInAir
 	BEQ PlayerWalkAnim
 
+IFNDEF CUSTOM_MUSH
 	LDA CurrentCharacter ; does this character get to flutter jump?
 	CMP #Character_Luigi
 	BNE ExitPlayerWalkJumpAnim
+ENDIF
+IFDEF CUSTOM_MUSH
+	LDX CurrentCharacter ; does this character get to flutter jump?
+    LDA DokiMode, X
+    AND #CustomCharFlag_Fluttering
+	BEQ ExitPlayerWalkJumpAnim
+ENDIF
 
 	LDA PlayerWalkFrameCounter
 	BNE UpdatePlayerAnimationFrame ; maintain current frame
@@ -8311,4 +8327,5 @@ ENDIF
 
 IFDEF CUSTOM_MUSH
 .include "src/extras/player-mods.asm"
+.include "src/extras/draw-inventory.asm"
 ENDIF

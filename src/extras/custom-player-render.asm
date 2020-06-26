@@ -392,6 +392,10 @@ CharacterFour_FramesSmall:
 	.db $04 ; $00 - start of relative character tile offets, for some reason
 	.db $06 ; $01
 
+; bit string
+; FACING LEFT
+; inverse, NONE, extraframe1, extraframe2, bottom right, top right, bottom left, top left
+
 CharacterOneMetaFrames:
     .db %00000000 ;; W
     .db %00000000 ;; Walk Carry
@@ -518,14 +522,23 @@ CharacterFlipLookup:
     .db %0010
 CharacterExtraSheets:
     .db $3C
-    .db $3D
     .db $3E
     .db $3F
+    .db $3D
 CharacterExtraSheetsSmall:
     .db $80
-    .db $81
     .db $82
     .db $83
+    .db $81
+;CHRBank_CharacterSize:
+;	.db CHRBank_Mario
+;	.db CHRBank_MarioSmall
+;	.db CHRBank_Princess
+;	.db CHRBank_PrincessSmall
+;	.db CHRBank_Toad
+;	.db CHRBank_ToadSmall
+;	.db CHRBank_Luigi
+;	.db CHRBank_LuigiSmall
 ExtraFramesOne:
 	.db $FB, $FB
 	.db $FB, $FB
@@ -627,22 +640,15 @@ ApplyMetaInformation:
 	STA SpriteDMAArea + $2E
 +
     LDA CharacterOneMetaFrames, X
-    AND #%10000
-    BEQ +
-	LDA SpriteDMAArea + $1A
-    EOR #$40
-	STA SpriteDMAArea + $1A
-+
-    LDA CharacterOneMetaFrames, X
-    AND #%100000
-    BEQ +
-	LDA SpriteDMAArea + $1E
-    EOR #$40
-	STA SpriteDMAArea + $1E
-+
-    LDA CharacterOneMetaFrames, X
+	STA ($c5)
     BPL +
-    LDX CurrentCharacter
+    LDA CurrentCharacter
+	LDX PlayerCurrentSize
+	BEQ +o
+	CLC
+	ADC #$4
++o
+	TAX
 	LDA CharacterExtraSheets, X
 	STA SpriteCHR1
     JMP ++
@@ -695,10 +701,10 @@ loc_BANKF_F46F_SMALL:
 
 loc_BANKF_F478_SMALL:
 	STA SpriteDMAArea + $2D
-	LDA #$FB
-	STA SpriteDMAArea + $19
-	STA SpriteDMAArea + $1d
-	STA SpriteDMAArea + $18
-	STA SpriteDMAArea + $1C
+;	LDA #$FB
+;	STA SpriteDMAArea + $19
+;	STA SpriteDMAArea + $1d
+;	STA SpriteDMAArea + $18
+;	STA SpriteDMAArea + $1C
     RTS
 

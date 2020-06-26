@@ -964,6 +964,10 @@ SetNumContinues:
 	STA Continues
 IFDEF CUSTOM_MUSH
 	JSR LoadStartingInventory
+StartingTransition:
+	LDA #TransitionType_Door
+	STA TransitionType
+	STA TransitionType_Init
 ENDIF
 
 ; We return here after picking "CONTINUE" from the game over menu.
@@ -993,10 +997,6 @@ IFNDEF NO_CONTINUE
 	JSR InitializeSomeLevelStuff
 ENDIF
 IFDEF NO_CONTINUE
-StartingTransition:
-	LDA #TransitionType_Door
-	STA TransitionType
-	STA TransitionType_Init
 	LDA #$00
 	STA PlayerState
 	STA PlayerState_Init
@@ -1004,6 +1004,7 @@ StartingTransition:
 	STA StopwatchTimer
 	STA PlayerCurrentSize
 	JSR DoCharacterSelectMenu
+	JSR ResetPlayerAbility
 ENDIF
 
 	JSR DisplayLevelTitleCardAndMore
@@ -1187,6 +1188,7 @@ ShowPauseScreen:
 	LDA #Stack100_Pause
 	STA StackArea
 
+
 PauseScreenLoop:
 	LDA #$0E
 	STA byte_RAM_6
@@ -1209,11 +1211,6 @@ PauseScreenExitCheck:
 	AND #ControllerInput_Start
 	BNE HidePauseScreen
 
-IFDEF CUSTOM_MUSH
-	LDA #PRGBank_2_3
-	JSR ChangeMappedPRGBank
-	JSR TestMyDraw
-ENDIF
 
 	DEC byte_RAM_6
 	BPL DoSuicideCheatCheck
@@ -1223,9 +1220,9 @@ ENDIF
 	AND #$01
 	CLC
 	ADC #$0D ; Will use either $0D or $0E from the update index pointers
-IFDEF CUSTOM_MUSH
-	LDA #$0
-ENDIF
+;IFDEF CUSTOM_MUSH
+;	LDA #$0
+;ENDIF
 	STA ScreenUpdateIndex ; @TODO I assume this is what blinks "PAUSE"
 	JMP PauseScreenLoop
 
@@ -1507,10 +1504,15 @@ ENDIF
 ; ---------------------------------------------------------------------------
 
 loc_BANKF_E69F:
+IFDEF CUSTOM_MUSH
+	JSR RestorePlayerToFullHealth
+ELSE
 	LDA #PlayerHealth_2_HP
 	STA PlayerHealth
 	LDA #$00
 	STA PlayerMaxHealth
+ENDIF
+
 	STA KeyUsed
 	STA Mushroom1upPulled
 	STA Mushroom1Pulled
@@ -2171,6 +2173,9 @@ PauseScreen_Card_ScreenReset:
 	STA ScreenUpdateIndex
 	JSR WaitForNMI
 
+IFDEF CUSTOM_MUSH
+	JSR TestMyDraw
+ENDIF
 
 EnableNMI:
 	LDA #PPUCtrl_Base2000 | PPUCtrl_WriteHorizontal | PPUCtrl_Sprite0000 | PPUCtrl_Background1000 | PPUCtrl_SpriteSize8x16 | PPUCtrl_NMIEnabled
@@ -3354,7 +3359,8 @@ IFDEF TRANSITION_INVULN
     LDA Player1JoypadPress
     BNE ++
     LDA PlayerYVelocity
-    CMP #4
+	BMI +
+    CMP #$10
     BCC +
 ++  LDA #0
     STA AreaTransitioned_Invuln
@@ -4433,6 +4439,9 @@ DoAreaReset:
 	STA ObjectCarriedOver
 	STA SubspaceTimer
 	STA SubspaceDoorTimer
+IFDEF CUSTOM_MUSH
+	JSR LoadWorldCHRBanks
+ENDIF
 IFDEF CONTROLLER_2_DEBUG
 	STA ChangeCharacterPoofTimer
 ENDIF

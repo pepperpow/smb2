@@ -22,76 +22,6 @@ CharacterEyeTiles:
 	.db $FB ; Toad
 	.db $D7 ; Princess
 
-CharacterTiles_Walk1:
-	.db $00
-	.db $02
-	.db $04 ; $00 - start of relative character tile offets, for some reason
-	.db $06 ; $01
-
-CharacterTiles_Carry1:
-	.db $0C ; $02
-	.db $0E ; $03
-	.db $10 ; $04
-	.db $12 ; $05
-
-CharacterTiles_Walk2:
-	.db $00 ; $06
-	.db $02 ; $07
-	.db $08 ; $08
-	.db $0A ; $09
-
-CharacterTiles_Carry2:
-	.db $0C ; $0a
-	.db $0E ; $0b
-	.db $14 ; $0c
-	.db $16 ; $0d
-
-CharacterTiles_Duck:
-	.db $FB ; $0e
-	.db $FB ; $0f
-	.db $2C ; $10
-	.db $2C ; $11
-
-CharacterTiles_DuckCarry:
-	.db $FB ; $12
-	.db $FB ; $13
-	.db $2E ; $14
-	.db $2E ; $15
-
-CharacterTiles_Jump:
-	.db $0C ; $16
-	.db $0E ; $17
-	.db $10 ; $18
-	.db $12 ; $19
-
-CharacterTiles_Death:
-	.db $30 ; $1a
-	.db $30 ; $1b
-	.db $32 ; $1c
-	.db $32 ; $1d
-
-CharacterTiles_Lift:
-	.db $20 ; $1e
-	.db $22 ; $1f
-	.db $24 ; $20
-	.db $26 ; $21
-
-CharacterTiles_Throw:
-	.db $00 ; $22
-	.db $02 ; $23
-	.db $28 ; $24
-	.db $2A ; $25
-
-CharacterTiles_Climb:
-	.db $18 ; $26
-	.db $1A ; $27
-	.db $1C ; $28
-	.db $1E ; $29
-
-CharacterTiles_PrincessJumpBody:
-	.db $B4 ; $2a
-	.db $B6 ; $2b
-
 DamageInvulnBlinkFrames:
 	.db $01, $01, $01, $02, $02, $04, $04, $04
 
@@ -255,9 +185,9 @@ loc_BANKF_F394:
 
 	LDA byte_RAM_0
 	STA SpriteDMAArea, Y
-IFDEF PLAYER_STUFF
-	STA SpriteDMAArea + $18
-ENDIF
+;IFDEF PLAYER_STUFF
+;	STA SpriteDMAArea + $18
+;ENDIF
 	STA SpriteDMAArea + $20
 	STA SpriteDMAArea + $24
 
@@ -271,9 +201,9 @@ loc_BANKF_F3A6:
 	BNE loc_BANKF_F3BB
 
 	LDA byte_RAM_0
-IFDEF PLAYER_STUFF
-	STA SpriteDMAArea + $1C
-ENDIF
+;IFDEF PLAYER_STUFF
+;	 STA SpriteDMAArea + $1C
+;ENDIF
 	STA SpriteDMAArea + $28
 	STA SpriteDMAArea + $2C
 
@@ -303,36 +233,9 @@ IFDEF TEST_FLAG
 	STA SpriteDMAArea + $2A
 	STA SpriteDMAArea + $26
 	STA SpriteDMAArea + $2E
-	STA SpriteDMAArea + $1A
-	STA SpriteDMAArea + $1E
     LDA PlayerCurrentSize
     JSR ApplyMetaInformation
 	LDX PlayerAnimationFrame
-ENDIF
-IFNDEF TEST_FLAG
-	LDX PlayerAnimationFrame
-	CPX #$07
-	BEQ loc_BANKF_F3E2
-
-	CPX #$04
-	BNE loc_BANKF_F3EE
-
-loc_BANKF_F3E2:
-	LDA PlayerAttributes
-	STA SpriteDMAArea + $22
-	STA SpriteDMAArea + $2A
-	ORA #$40
-	BNE loc_BANKF_F3F8
-
-loc_BANKF_F3EE:
-	AND #$FC
-	ORA PlayerAttributes
-	STA SpriteDMAArea + $22
-	STA SpriteDMAArea + $2A
-
-loc_BANKF_F3F8:
-	STA SpriteDMAArea + $26
-	STA SpriteDMAArea + $2E
 ENDIF
 	LDA CharacterFrameEyeTiles, X
 	BNE loc_BANKF_F408
@@ -402,20 +305,65 @@ loc_BANKF_F478:
 	STA SpriteDMAArea + $2D
 
     TXA
+	PHA
+	JSR FindSpriteSlot
+	PLA
     LSR
     TAX
 	LDA ExtraFramesOne, X
-	STA SpriteDMAArea + $19
-    CMP #$FB
-    BNE +
-	STA SpriteDMAArea + $18
-+
+	CMP #$FB
+	BEQ +++
+	STA SpriteDMAArea + 1, Y
+	LDA SpriteDMAArea + $20
+	STA SpriteDMAArea + 0, Y
+	STA SpriteDMAArea + 2, Y
+;    CMP #$FB
+;    BNE +
+;	STA SpriteDMAArea + $18
+;+
++++
 	LDA ExtraFramesOne + 1, X
-	STA SpriteDMAArea + $1d
-    CMP #$FB
-    BNE +
-	STA SpriteDMAArea + $1C
+	CMP #$FB
+	BEQ +++
+	STA SpriteDMAArea + 5, Y
+	LDA SpriteDMAArea + $28
+	STA SpriteDMAArea + 4, Y
+    LDA PlayerDirection
+    BEQ +
+	LDA SpriteDMAArea + $23
+	CLC
+	ADC #$10
+    JMP ++
 +
+	LDA SpriteDMAArea + $23
+	SEC
+	SBC #$08
+++
+	STA SpriteDMAArea + 3, Y
+	STA SpriteDMAArea + 7, Y
+	LDA SpriteDMAArea + $22
+	STA SpriteDMAArea + 2, Y
+	STA SpriteDMAArea + 6, Y
+    LDA ($c5)
+    AND #%10000
+    BEQ +
+	LDA SpriteDMAArea + $22
+    EOR #$40
+	STA SpriteDMAArea + 2, Y
++
+    LDA ($c5)
+    AND #%100000
+    BEQ +
+	LDA SpriteDMAArea + $22
+    EOR #$40
+	STA SpriteDMAArea + 6, Y
++
+;	STA SpriteDMAArea + $1d
+;    CMP #$FB
+;    BNE +
+;	STA SpriteDMAArea + $1C
+;+
++++
     RTS
 
 

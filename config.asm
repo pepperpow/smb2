@@ -27,7 +27,7 @@
 ;
 ; Note that if you use this, you should probably use
 ; PRESERVE_FREE_SPACE, too.
-COMPATIBILITY = 1
+; COMPATIBILITY = 1
 
 ; ----------------------------------------
 ; Preserve unused space.
@@ -215,7 +215,7 @@ SCROLL_FIX = 1
 
 PHANTO_CUSTOM = 1
 
-REMOVE_DCPM = 1
+REMOVE_DPCM = 1
 
 NO_CONTINUE = 1
 

@@ -213,6 +213,7 @@ PlaceInventoryItem:
     CMP #$11 ; undo mushroom, make this less specific
     BNE +
     JSR Normal_Mushroom_BEH
+    LDA #$1
 +
     BNE ResetPlayerAbility
 
@@ -247,7 +248,7 @@ PlaceInventoryItem_Full:
     STA EnemyState, X
     LDA #Enemy_Mushroom
     STA ObjectType, X
-    LDA #$D0
+    LDA #$F0
     STA ObjectYVelocity, X
     STA SubspaceTimer
     LDA EnemyVariable, X
@@ -271,7 +272,7 @@ ResetPlayerAbility:
 
 ApplyPlayerAbility:
     BEQ ++
-    CPX #$8
+    CPX #$9
     BCS +
     JSR CustomBeh_Flag
     RTS
@@ -292,7 +293,6 @@ LoadStartingInventory:
 +   INY
     CPY #$3
     BNE -
-    JSR ResetPlayerAbility
     RTS
 
 
@@ -545,9 +545,9 @@ EnemyCustom_Attributes:
  	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
  	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
  	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
- 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
+ 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
 
-	.db ObjAttrib_Palette1 | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
+	.db ObjAttrib_Palette1 ; $3F Enemy_Mushroom
 
 ; 	.db ObjAttrib_Palette1 | ObjAttrib_FrontFacing | ObjAttrib_Mirrored ; $3F Enemy_Mushroom
 ; 	.db ObjAttrib_Palette2 | ObjAttrib_FrontFacing  ; $3F Enemy_Mushroom
@@ -593,7 +593,7 @@ EnemyCustom_TableSprites:
     .db $c0, $c2
     .db $f4, $f6
 
-    .db $a5, $a5
+    .db $dc, $de
 ;     .db $a4, $a4
 ;     .db $b5, $b9
 ;     .db $db, $db
@@ -716,7 +716,7 @@ CustomDestroyAll:
 CustomObject_PowerItem:
     LDA #$32
     STA SpriteCHR4
-    JSR CustomDestroyAll
+;   JSR CustomDestroyAll
 CustomObject_PowerItem_NoChrSwitch:
     JSR Normal_Mushroom
     LDY byte_RAM_12

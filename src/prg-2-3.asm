@@ -2005,6 +2005,9 @@ EnemyDestroy_AfterAllowRespawn:
 	LDA #EnemyState_Inactive
 	STA EnemyState, X
 IFDEF CUSTOM_MUSH
+	LDA ObjectType, X
+	CMP #Enemy_MushroomBlock
+	BNE EnemyDestroy_Exit
 	LDA #$f8
 	STA ObjectXLo, X
 	STA ObjectYLo, X
@@ -5753,8 +5756,17 @@ PutCarriedObjectInHands:
 	BNE loc_BANK2_9ACA
 
 	LDY CurrentCharacter ; Check if we are Princess
+IFNDEF CUSTOM_MUSH
 	DEY
 	BEQ loc_BANK2_9ACA ; If so, skip making it bob sometimes.
+ENDIF
+IFDEF CUSTOM_MUSH
+	STA SpriteTempScreenY ; Determine where it should show up on
+    LDA DokiMode, Y
+    AND #CustomCharFlag_PeachWalk
+	BNE loc_BANK2_9ACA + 3
+    LDA SpriteTempScreenY
+ENDIF
 
 	SEC
 	SBC #$01
@@ -6212,9 +6224,10 @@ IFDEF CUSTOM_MUSH ;; only for mushrooms, but should be extended
 	CPX #$D9
 	BCC +x
 	TXA
-	SBC #$DA
+	SBC #$D9
+	ASL
 	TAX
-	JMP +
+	JMP SetSpriteTiles_Tilemap3
 +x
     TXA
     PHA

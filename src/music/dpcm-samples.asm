@@ -119,7 +119,7 @@ DPCMSampleData_BossHurt:
 DPCMSampleDataEnd_BossHurt:
 
 DPCMSampleData_PlayerDeath:
-IFDEF REMOVE_DPCM
+IFNDEF REMOVE_DPCM
 	.db $53,$55,$55,$55,$55,$55,$55,$55,$B5,$FA,$FE,$FF,$3F,$00,$00,$00 ; NOT logged as PCM data!
 	.db $80,$FE,$FF,$0B,$00,$00,$80,$FF,$FF,$FF,$01,$00,$00,$FC,$FF,$FF,$1F,$00 ; $10
 	.db $00,$E0,$FF,$FF,$FF,$00,$00,$00,$FF,$FF,$FF,$07,$00,$00,$E8,$FF,$FF,$1F ; $22
@@ -264,7 +264,7 @@ DPCMSampleDataEnd_BossDeath:
 
 ; sort of a zapping sound
 DPCMSampleData_Unused:
-IFDEF REMOVE_DPCM
+IFNDEF REMOVE_DPCM
 	.db $FF
 	.db $5B,$02,$C0,$FF,$03,$D0,$FF,$02,$F8,$57,$00,$FB,$2F,$00,$FA,$BF,$01,$00 ; NOT logged as PCM data!
 	.db $FE,$FF,$07,$7E,$02,$00,$C0,$FE,$FF,$7F,$E0,$04,$00,$F4,$FF,$AB,$01,$00 ; $12

@@ -91,9 +91,9 @@ StartingHold:
     .db $0  ;; select death
     .db $0  ;; select death
 CrystalCondition:
-    .db $0 ;; crystals
+    .db $1 ;; crystals
 BossCondition:
-    .db $0  ;; bosses
+    .db $1  ;; bosses
 RescueCondition:
     .db $0  ;; ok
 WinLevel:
@@ -127,6 +127,18 @@ TEXT_Toad:
 	.db $8+4,$22,$EC,$8, $FB, $FB, $ED, $E8, $DA, $DD, $FB, $FB, $0
 TEXT_Luigi:
 	.db $8+4,$22,$EC,$8, $FB, $E5, $EE, $E2, $E0, $E2, $FB, $FB, $0
+;TEXT_Extra_Lives:
+;    .db $8+4,$22,$EC,$8, $de,$f1,$ed,$eb,$da,$fb,$e5,$e2,$ef,$de,$ec,$f8,$f8,$f8,$f8,$d0
+;TEXT_Coins:
+;    .db $8+4,$22,$EC,$8, $dc,$e8,$e2,$e7,$ec,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$d0
+TEXT_Crystals:
+    .db $8+4,$26,$A8,$8, $dc,$eb,$f2,$ec,$ed,$da,$e5,$ec,$0
+TEXT_Bosses:
+    .db $8+4,$26,$88,$8,$db,$e8,$ec,$ec,$de,$ec,$f8,$f8,$0
+TEXT_Fragments:
+    .db $10+4,$26,$E8,$10, $DF,$EB,$DA,$E0,$E6,$DE,$E7,$ED,$EC,$F8,$F8,$F8,$F8,$F8,$F8,$D4,$0
+;TEXT_Total_Rooms:
+;    .db $8+4,$22,$EC,$8, $ed,$e8,$ed,$da,$e5,$fb,$eb,$e8,$e8,$e6,$ec,$f8,$f8,$f8,$f8,$d0
 Custom_TextPointers:
 	.dw BonusChanceText_PUSH_OTHER_BUTTON ; 0
     .dw TEXT_UP ; 1
@@ -137,6 +149,9 @@ Custom_TextPointers:
     .dw TEXT_Princess ; 1
     .dw TEXT_Toad; 1
     .dw TEXT_Luigi ; 1
+    .dw TEXT_Crystals
+    .dw TEXT_Bosses
+    .dw TEXT_Fragments
 
 ;; thx XK
 Custom_BufferText:
@@ -156,50 +171,34 @@ Custom_BufferText:
 	BNE -
 	RTS
 
-
-    
-TestMyDraw:
-    LDA #$3
+Custom_BufferTextNMI:
     JSR Custom_BufferText
-	LDA #ScreenUpdateBuffer_RAM_301
-	STA ScreenUpdateIndex
     JSR WaitForNMI
-    LDA #$4
-    JSR Custom_BufferText
-	LDA #ScreenUpdateBuffer_RAM_301
-	STA ScreenUpdateIndex
-    JSR WaitForNMI
-+
-    LDY #$0
-    LDA #$58
-    STA byte_RAM_0 
-    LDA #$30
-    STA byte_RAM_1
-    LDA #$00
-    STA byte_RAM_B
-    STA byte_RAM_C
-    LDX #$A2
-	JSR SetSpriteTiles
-    LDA #$58
-    STA byte_RAM_0 
-    LDA #$40
-    STA byte_RAM_1
-    LDX #$A2
-    LDA #$00
-    STA byte_RAM_B
-    STA byte_RAM_C
-	JSR SetSpriteTiles
-    LDA #$58
-    STA byte_RAM_0 
-    LDA #$50
-    STA byte_RAM_1
-    LDX #$A2
-    LDA #$00
-    STA byte_RAM_B
-    STA byte_RAM_C
-	JSR SetSpriteTiles
     RTS
 
+TEXT_Digits:
+    .db $2+4,$26,$C8,$2,$db,$e8,$0
+Custom_ValueText:
+    PHA
+    LDA #$6
+    STA PPUBuffer_301 - 1
+    STX PPUBuffer_301 + 0
+    STY PPUBuffer_301 + 1
+    LDA #$2
+    STA PPUBuffer_301 + 2
+    PLA
+	JSR GetTwoDigitNumberTiles
+    STA PPUBuffer_301 + 4
+    STY PPUBuffer_301 + 3
+    LDA #$0
+    STA PPUBuffer_301 + 5
+    JSR WaitForNMI
+    RTS
+
+
+    
+
+IFDEF PAUSE_SCREEN
 Draw_Pause_Stats_Palette:
     LDY #0
     LDX #$E1
@@ -228,168 +227,8 @@ Draw_Pause_Stats_Palette:
 	STA ScreenUpdateIndex
     JSR WaitForNMI
     RTS
-
-
-IFDEF PAUSE_SCREEN
-
-TEXT_Health:
-    .db $e1,$de,$da,$e5,$ed,$e1,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$d0
-TEXT_Extra_Lives:
-    .db $de,$f1,$ed,$eb,$da,$fb,$e5,$e2,$ef,$de,$ec,$f8,$f8,$f8,$f8,$d0
-TEXT_Coins:
-    .db $dc,$e8,$e2,$e7,$ec,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$d0
-TEXT_Cherries:
-    .db $dc,$e1,$de,$eb,$eb,$f2,$ec,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$d0
-TEXT_Crystals:
-    .db $dc,$eb,$f2,$ec,$ed,$da,$e5,$ec,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$d0
-TEXT_Bosses:
-    .db $db,$e8,$ec,$ec,$de,$ec,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$d0
-TEXT_Fragments:
-    .db $DF,$EB,$DA,$E0,$E6,$DE,$E7,$ED,$EC,$F8,$F8,$F8,$F8,$F8,$F8,$d0
-TEXT_Total_Rooms:
-    .db $ed,$e8,$ed,$da,$e5,$fb,$eb,$e8,$e8,$e6,$ec,$f8,$f8,$f8,$f8,$d0
-TEXT_Continues:
-    .db $dc,$e8,$e7,$ed,$e2,$e7,$ee,$de,$ec,$f8,$f8,$f8,$f8,$f8,$f8,$d0
-TEXT_Max_Health:
-    .db $e6,$da,$f1,$fb,$e1,$de,$da,$e5,$ed,$e1,$f8,$f8,$f8,$f8,$f8,$d0
-TEXT_Total_1ups:
-    .db $e6,$da,$f1,$fb,$e5,$e2,$ef,$de,$ec,$f8,$f8,$f8,$f8,$f8,$f8,$d0
-TEXT_Murders:
-    .db $e6,$ee,$eb,$dd,$de,$eb,$ec,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$d0
-TEXT_Crystals2:
-    .db $dc,$eb,$f2,$ec,$ed,$da,$e5,$ec,$f8,$dc,$f8,$f8,$f8,$f8,$f8,$d0
-TEXT_Bosses2:
-    .db $db,$e8,$ec,$ec,$de,$ec,$f8,$dc,$f8,$f8,$f8,$f8,$f8,$f8,$f8,$d0
-
-StatDrawMemory:
-    .dw PlayerHealth
-    .dw ExtraLives
-    .dw SlotMachineCoins
-    .dw Level_Count_Cherries
-    .dw Level_Count_Crystals
-    .dw World_Count_Bosses
-    .dw MushroomFragments
-    .dw Level_Count_Discovery
-    .dw Continues
-    .dw PlayerMaxHealth
-    .dw Level_Count_1ups
-    .dw Level_Count_KillCnt
-    .dw CrystalCondition
-    .dw BossCondition
-
-InputPause_Stats:
-	LDA Player1JoypadHeld
-	AND #ControllerInput_Down | #ControllerInput_Up
-    BEQ +
-    AND #ControllerInput_Down
-    BEQ +++
-    INC StatPrintOffset
-    INC StatPrintOffset
-+++ DEC StatPrintOffset   
-    BEQ ++
-    BPL +++
-    LDA #0
-    STA StatPrintOffset
-    JMP ++
-+++ LDA StatPrintOffset
-    CMP #$9
-    BCC ++
-    LDA #$8
-    STA StatPrintOffset
-++  LDA #ScreenUpdateBuffer_RAM_55F
-	STA ScreenUpdateIndex
-    JSR Draw_Pause_Stats
-+   RTS
-
-
-Draw_Pause_Stats: ;; needs some clear refactoring but works, very dated
-    LDA #$1 
-    JSR Custom_BufferText
-	LDA #ScreenUpdateBuffer_RAM_301
-	STA ScreenUpdateIndex
-    JSR WaitForNMI
-    LDA #$2
-    JSR Custom_BufferText
-    JSR WaitForNMI
-    LDA #$0 
-	LDX StatPrintOffset
-    STX StatPrintCurOffset
---  BEQ ++
-    CLC
-    ADC #$10
-    DEX
-    JMP --
-++
-    TAX
-    LDA #$60 ;; amount of characters to print, 0x10 per line
-    STA StatPrintDec
-    LDA #$46 ;; starting row
-    STA StatPrintDecRow
-    LDY #0
--   
-    LDA TEXT_Health, X
-	STA $55F+3, Y
-    INX
-    INY
-    CPY #$10
-    BNE +
-    LDA #$26
-	STA $55F
-    LDA StatPrintDecRow
-	STA $55F + 1
-    CLC
-    ADC #$20
-    STA StatPrintDecRow
-    LDA #$12
-	STA $55F + 2
-    LDA #$FB
-	STA $55F + 3, Y
-    LDA #$FB
-	STA $55F + 4, Y
-    LDA #0
-	STA $55F + 5, Y
-    LDA StatPrintCurOffset 
-    ASL
-    TAY
-    LDA StatDrawMemory, Y
-    STA $c5
-    LDA StatDrawMemory + 1, Y
-    STA $c5 + 1
-    LDY #$0
-    LDA ($c5), Y
-    LDY StatPrintCurOffset
-    CPY #$0
-    BNE +++
-    LSR
-    LSR
-    LSR
-    LSR
-    CLC
-    ADC #1
-+++	JSR GetTwoDigitNumberTiles
-    STA $55F + 18
-    STY $55F + 17
-    INC StatPrintCurOffset 
-    TXA
-    PHA
-	LDA #ScreenUpdateBuffer_RAM_55F
-	STA ScreenUpdateIndex
-    JSR WaitForNMI
-    LDY #$0
-    PLA
-    TAX
-+   DEC StatPrintDec
-    BNE -
-++
-	LDA #$25
-	STA $55F
-	LDA #$0E
-	STA $55F + 1
-	LDA #$07
-	STA $55F + 2
-    LDA #$0 
-    RTS
 ENDIF
+
 
 GetMushFlag_Bitmask:
 ;# takes LDX = mush num
