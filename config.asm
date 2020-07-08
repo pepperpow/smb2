@@ -27,7 +27,7 @@
 ;
 ; Note that if you use this, you should probably use
 ; PRESERVE_FREE_SPACE, too.
-; COMPATIBILITY = 1
+COMPATIBILITY = 1
 
 ; ----------------------------------------
 ; Preserve unused space.
@@ -61,7 +61,7 @@
 ;          at the worst possible time.
 ;          The fix just waits for an NMI cycle before doing its work.
 ;
-; REV_A = 1
+REV_A = 1
 
 
 
@@ -193,7 +193,7 @@ BLOCK_CHECK = 1
 
 CUSTOM_TILE_IDS = 1
 
-DEBUG = 1
+; DEBUG = 1
 
 FLAG_SYSTEM = 1
 

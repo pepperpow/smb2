@@ -1456,6 +1456,15 @@ UseSubareaScreenBoundaries:
 	STA PPUScrollXMirror_Backup
 	LDA PPUScrollXHiMirror
 	STA PPUScrollXHiMirror_Backup
+IFDEF TEST_FLAG
+	LDA PPUScrollYMirror
+	STA PPUScrollYMirror_Backup
+	LDA PPUScrollYHiMirror
+	STA PPUScrollYHiMirror_Backup
+	LDA #0
+	STA PPUScrollYMirror
+	STA PPUScrollYHiMirror
+ENDIF
 	LDA ScreenBoundaryLeftHi
 	STA ScreenBoundaryLeftHi_Backup
 	INC byte_RAM_53D
@@ -1723,6 +1732,9 @@ IFDEF DRAW_SECRET
 DetectSecret:
 	.include "src/extras/secret-detection.asm"
 	RTS
+DetectLocked:
+	.include "src/extras/locked-detection.asm"
+	RTS
 ENDIF
 
 ;
@@ -1746,6 +1758,7 @@ IFDEF CUSTOM_TILE_IDS
 ENDIF
 IFDEF DRAW_SECRET
 	JSR DetectSecret
+	JSR DetectLocked
 ENDIF
 	STA DrawTileId
 	AND #%11000000
@@ -2284,8 +2297,10 @@ HandlePlayerState_GoingDownJar:
 	RTS
 
 HandlePlayerState_GoingDownJar_NonWarp:
+IFNDEF CUSTOM_MUSH
 	CMP #$01
 	BEQ HandlePlayerState_GoingDownJar_Regular
+ENDIF
 
 	STA DoAreaTransition
 	RTS
@@ -2390,10 +2405,19 @@ HandlePlayerState_HawkmouthEating:
 
 	LDA #ObjAttrib_BehindBackground
 	STA PlayerAttributes
+IFDEF TEST_FLAG
+	LDA PlayerDirection
+	BEQ +
+	LDA #$04
+	BNE ++
++   LDA #$F8
+++  STA PlayerXVelocity
+ELSE
 	LDA #$04
 	STA PlayerXVelocity
 	LDA #$01
 	STA PlayerDirection
+ENDIF
 
 loc_BANK0_8BE3:
 	JSR ApplyPlayerPhysicsX
@@ -3060,6 +3084,21 @@ ENDIF
 IFNDEF CUSTOM_MUSH
 	STA ObjectXVelocity, X
 ENDIF
+IFDEF CUSTOM_MUSH
+	LDA ObjectType, X
+	CMP #Enemy_Egg
+	BNE +
+	LDA EnemyVariable, X
+	BEQ +
+	LDA ObjectYLo, X
+	CLC
+	ADC #$C
+	STA ObjectYLo, X
+	LDA ObjectYHi, X
+	ADC #$0
+	STA ObjectYHi, X
++
+ENDIF
 	LDA #$01
 	STA EnemyArray_42F, X
 	LSR A
@@ -3468,6 +3507,7 @@ IFDEF CUSTOM_MUSH
     LDX #CustomBitFlag_AllTerrain
     JSR ChkFlagPlayer2
     BNE + 
+++
 	LDA #$0
 	STA byte_RAM_E
 +
@@ -3613,7 +3653,18 @@ PlayerTileCollision_Climbable:
 	BEQ PlayerTileCollision_Climbable_Exit
 
 	LDY HoldingItem
+IFDEF CUSTOM_MUSH
+	BEQ +
+	LDX ObjectBeingCarriedIndex
+	LDY ObjectType, X
+	CPY #Enemy_Key
+	BEQ +
+	CPY #Enemy_SubspacePotion
 	BNE PlayerTileCollision_Climbable_Exit
++   LDY #$0
+ELSE
+	BNE PlayerTileCollision_Climbable_Exit
+ENDIF
 
 	LDA PlayerXLo
 	CLC
@@ -3846,6 +3897,18 @@ TileBehavior_CheckJar:
 	LDA PlayerDucking
 	BEQ TileBehavior_CheckPickUp
 
+IFDEF UNUSED
+	LDY HoldingItem
+	BEQ +
+	LDX ObjectBeingCarriedIndex
+	LDY ObjectType, X
+	CPY #Enemy_Key
+	BEQ +
+	CPY #Enemy_SubspacePotion
+	BNE loc_BANK0_917C
++
+ENDIF
+
 	LDA byte_RAM_0
 	LDX InSubspaceOrJar
 	CPX #$02
@@ -3853,6 +3916,10 @@ TileBehavior_CheckJar:
 
 	; In SubSpace, a non-enterable jar can be entered
 	; Now Y = $00
+IFDEF TEST_FLAG
+NopThisForWarps:
+	LDA #$0
+ENDIF
 	CMP #BackgroundTile_JarTopNonEnterable
 	BEQ TileBehavior_GoDownJar
 
@@ -3972,10 +4039,19 @@ loc_BANK0_917C:
 	LDX HoldingItem
 	BEQ loc_BANK0_91AE
 
+IFDEF CUSTOM_MUSH
+	LDX ObjectBeingCarriedIndex
+	LDY ObjectType, X
+	CPY #Enemy_Key
+	BEQ loc_BANK0_91AE
+	CPY #Enemy_SubspacePotion
+	BNE locret_BANK0_91CE
+ELSE
 	LDX ObjectBeingCarriedIndex
 	LDY ObjectType, X
 	CPY #Enemy_Key
 	BNE locret_BANK0_91CE
+ENDIF
 
 loc_BANK0_91AE:
 	LDX InSubspaceOrJar
@@ -4093,9 +4169,9 @@ IFDEF LOCKED_DOOR
     LDX #CustomBitFlag_MasterKey
     LDA #$0
     JSR ChkFlagPlayer2
-    BNE +
-    JMP SetFlagUnlock  ;; still need to have an object to set ?
-+
+    BEQ SetFlagUnlock  ;; still need to have an object to set ?
+    LDA KeyUsed
+	BNE SetFlagUnlock
 ENDIF
 	LDA HoldingItem
 	; don't come to a locked door empty-handed
@@ -4109,20 +4185,17 @@ ENDIF
 
 	; the key has been used
 	INC KeyUsed
-SetFlagUnlock:
-IFDEF LOCKED_DOOR
-    TYA
-    PHA
-    LDX #CustomBitFlag_Key 
-    JSR ApplyFlagLevel
-    INC Level_Count_Unlocks
-    PLA
-    TAY
-ENDIF
 	TYA
 	TAX
 
 	JSR TurnKeyIntoPuffOfSmoke
+IFDEF LOCKED_DOOR
+SetFlagUnlock:
+    LDX #CustomBitFlag_Key 
+    JSR ApplyFlagLevel
+    INC Level_Count_Unlocks
+	INC KeyUsed
+ENDIF
 	JSR DoorAnimation_Locked
 	JMP DoorHandling_GoThroughDoor
 

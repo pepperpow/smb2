@@ -1,7 +1,7 @@
 
 HandlePlayer_ChangeChar: ; make this less dumb
 	LDA CharSelectAnytime
-	BEQ ++
+	BEQ +
     LDA PlayerInAir
     BNE +
 	LDA Player1JoypadHeld
@@ -24,11 +24,14 @@ HandlePlayer_ChangeChar: ; make this less dumb
 +
     LDA CurrentCharacter
     CMP PreviousCharacter
-    BEQ ++
+    BEQ +end
 	STA PreviousCharacter
+	LDA CharSelectAnytime
+	BEQ +
 	LDA PlayerCurrentSize
 	EOR #$1
 	STA PlayerCurrentSize
++
     JSR CustomCopyChar
-++
++end
 	RTS

@@ -185,9 +185,6 @@ loc_BANKF_F394:
 
 	LDA byte_RAM_0
 	STA SpriteDMAArea, Y
-;IFDEF PLAYER_STUFF
-;	STA SpriteDMAArea + $18
-;ENDIF
 	STA SpriteDMAArea + $20
 	STA SpriteDMAArea + $24
 
@@ -201,9 +198,6 @@ loc_BANKF_F3A6:
 	BNE loc_BANKF_F3BB
 
 	LDA byte_RAM_0
-;IFDEF PLAYER_STUFF
-;	 STA SpriteDMAArea + $1C
-;ENDIF
 	STA SpriteDMAArea + $28
 	STA SpriteDMAArea + $2C
 

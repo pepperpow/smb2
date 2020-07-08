@@ -43,43 +43,6 @@ ENDIF
 ++  
     RTS
 
-; IFDEF PLAYER_STUFF
-; BossDefeatMush:
-;     JSR TurnIntoPuffOfSmoke_Proper
-
-;     LDA BossMushroom
-;     BEQ +
-;     LDX #CustomBitFlag_Mush1
-;     JSR ChkFlagLevel
-;     BEQ +
-;     LDX byte_RAM_12
-;     JSR CreateEnemy_TryAllSlots
-;     BMI +
-;     TXA
-;     PHA
-; 	LDX byte_RAM_0
-;     STX byte_RAM_12
-;     LDY #$0
-;     STY EnemyVariable, X
-;     LDA PlayerLevelPowerup_1, Y
-;     STA MushroomEffect, X
-;     LDA #Enemy_Mushroom
-;     STA ObjectType, X
-;     JSR ProcessCustomPowerup    
-;     PLA
-;     STA byte_RAM_12
-; 	LDX byte_RAM_0
-; 	LDY byte_RAM_12
-; 	LDA unk_RAM_4EF, Y
-; 	STA ObjectXHi, X
-;     LDA #$D0
-;     STA ObjectYVelocity, X
-;     LDA #$0
-;     STA ObjectXVelocity, X
-; +   
-; 	LDX byte_RAM_12
-;     RTS
-; ENDIF
 
 ; ;; other ideas:
 ; ;; stat upgrades
@@ -250,7 +213,11 @@ PlaceInventoryItem_Full:
     STA ObjectType, X
     LDA #$F0
     STA ObjectYVelocity, X
+    LDA InSubspaceOrJar
+    BEQ +
+    LDA #$F0
     STA SubspaceTimer
++
     LDA EnemyVariable, X
     TAY
     PLA
@@ -409,8 +376,8 @@ GetCharBit:
       JSR     RptPalette
 
 EndCharacterSwap:
-      LDA     #PRGBank_2_3
-      JSR     ChangeMappedPRGBank
+    LDA     #PRGBank_2_3
+    JSR     ChangeMappedPRGBank
     ; load carry offsets
 	; Copy the character-specific FINAL carrying heights into memory
 	LDY CurrentCharacter
@@ -422,8 +389,8 @@ EndCharacterSwap:
 	STA ItemCarryYOffsetsRAM + $0E
 	LDA CarryYOffsetSmallHi, Y
 	STA ItemCarryYOffsetsRAM + $15
-      LDA     #PRGBank_0_1
-      JSR     ChangeMappedPRGBank
+    LDA     #PRGBank_0_1
+    JSR     ChangeMappedPRGBank
 	; update chr for character
 	JSR LoadCharacterCHRBanks
     RTS
@@ -451,19 +418,64 @@ EndCharacterSwap:
 ;       RTS
 
 RptPalette:
-      LDY #0
-  -
-      LDA     MarioPalette,X
-      STA     RestorePlayerPalette0,Y
-      INX
-      INY
-      CPY     #4
-      BNE     -
-      LDA SkyFlashTimer
-      BNE +
-      INC     SkyFlashTimer
+    LDY #0
+-
+    LDA     MarioPalette,X
+    STA     RestorePlayerPalette0,Y
+    INX
+    INY
+    CPY     #4
+    BNE     -
+    LDX byte_RAM_300
+    LDA #$3F
+    STA PPUBuffer_301, X
+    LDA #$10
+    STA PPUBuffer_301 + 1, X
+    LDA #$04
+    STA PPUBuffer_301 + 2, X
+    LDA SkyColor
+	STA PPUBuffer_301 + 3, X
+	LDA RestorePlayerPalette1
+	STA PPUBuffer_301 + 4, X
+	LDA RestorePlayerPalette2
+	STA PPUBuffer_301 + 5, X
+	LDA RestorePlayerPalette3
+	STA PPUBuffer_301 + 6, X
+	LDA #$00
+	STA PPUBuffer_301 + 7, X
+	TXA
+	CLC
+	ADC #$07
+	STA byte_RAM_300
 +
       RTS
+
+;RptPalette:
+;    LDA $4+4
+;    STA PPUBuffer_55F - 1
+;    LDA #$3F
+;    STA PPUBuffer_55F + 0
+;    LDA #$11
+;    STA PPUBuffer_55F + 1
+;    LDA #$4
+;    STA PPUBuffer_55F + 2
+;    LDY #0
+;    INX
+;-
+;    LDA     MarioPalette,X
+;	STA PPUBuffer_55F + 3, Y ; ...and store it in the buffer
+;    INX
+;    INY
+;    CPY     #3
+;    BNE     -
+;    LDA #$0
+;    STA PPUBuffer_55F + 3, Y
+;	LDA #ScreenUpdateBuffer_RAM_55F
+;	STA ScreenUpdateIndex
+;    JSR WaitForNMI
+;    JSR WaitForNMI
+;    JSR WaitForNMI
+;    RTS
 
 ; IFDEF PLAYER_STUFF
 ; ;; appearances

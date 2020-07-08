@@ -61,8 +61,6 @@ CharSelectDeath:
     .db $1  ;; select death (0, no select, 1, always select, 2, random select)
 CharSelectAnytime:
     .db $1  ;; select death
-BossMushroom:
-    .db $1  ;; select death
 StartingInventory:
     .db $0  ;; select death
     .db $0  ;; select death
@@ -107,10 +105,6 @@ CharacterInitialLock:
 
 BonusChanceText_PUSH_OTHER_BUTTON:
 	.db $13+4,$22,$87,$13,$DB,$FB,$DC,$DA,$E7,$DC,$DE,$E5,$F7,$FB,$EC,$ED,$DA,$EB,$ED,$FB,$D1,$EE,$E9,$0
-TEXT_UP:
-	.db $2+4,$2E,$58,$2,$EE,$E9,$0
-TEXT_DN:
-	.db $2+4,$2E,$F8,$2,$DD,$E7,$0
 TEXT_EQUIP:
 	.db $9+4,$2D,$46,$9
     .db "EQUIPMENT" + $99
@@ -141,8 +135,6 @@ TEXT_Fragments:
 ;    .db $8+4,$22,$EC,$8, $ed,$e8,$ed,$da,$e5,$fb,$eb,$e8,$e8,$e6,$ec,$f8,$f8,$f8,$f8,$d0
 Custom_TextPointers:
 	.dw BonusChanceText_PUSH_OTHER_BUTTON ; 0
-    .dw TEXT_UP ; 1
-    .dw TEXT_DN ; 1
     .dw TEXT_EQUIP ; 1
     .dw TEXT_UPGRADE ; 1
     .dw TEXT_Mario ; 1

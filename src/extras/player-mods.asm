@@ -518,7 +518,7 @@ StoreItem:
 	STA EnemyState, X
     LDA #$14
     STA EnemyTimer, X
-    LDA #$30
+    LDA #$8
     STA ProjectileTimer
     LDA ObjectType, X
     STA StoredItem

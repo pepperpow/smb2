@@ -23,17 +23,18 @@ ReadLevelForegroundData_NextByteObject:
 
 ReadLevelForegroundData_NextByte:
 	INY
-	LDA (byte_RAM_5), Y
-	CMP #$FF
-	BNE ReadLevelForegroundData_ProcessObject
-	; Encountering `$FF` indicates the end of the level data.
-	RTS
 
 ReadLevelForegroundData_ProcessObject:
 	; Stash the lower nybble of the first byte.
 	; For a special object, this will be the special object type.
 	; For a regular object, this will be the X position.
 	; If the upper nybble of the first byte is $F, this is a special object.
+	LDA (byte_RAM_5), Y
+	CMP #$FF
+	BNE +
+	; Encountering `$FF` indicates the end of the level data.
+	RTS
++
 	LDA (byte_RAM_5), Y
 	AND #$F0
 	CMP #$F0
@@ -46,7 +47,7 @@ ReadLevelForegroundData_SpecialObject:
 	JSR CopyLevelDataMemory_Switch
 	JMP ReadLevelForegroundData_ProcessObject
 	+
-	CMP #$FD ;; Set Page
+	CMP #$FD ;; Set Page 
 	BNE +
 	STY byte_RAM_F
 	JSR SetAreaPointer
@@ -64,23 +65,35 @@ ReadLevelForegroundData_SpecialObject:
 	JSR SetAddressLinear
 	JMP ReadLevelForegroundData_ProcessObject
 	+
-	CMP #$FB ;; Set Random Memory Address
+	CMP #$FB ;; Set Random Memory Address Single
 	BNE +
 	JSR SetArbitraryMemAddress
-	LDA (byte_RAM_5), Y
-	TAX
-	INY
-	STY byte_RAM_5
-	JSR SetAddressSingleRepeat
+	STY byte_RAM_F
+	JSR SetAddressSingle
 	JMP ReadLevelForegroundData_ProcessObject
 	+
-	CMP #$FA ;; Set Random Memory Address
+	CMP #$FA ;; Jump Random Memory Address
 	BNE +
 	JSR SetArbitraryMemAddress
 	JSR SetArbitraryJump
 	LDY byte_RAM_F
 	JMP ReadLevelForegroundData_ProcessObject
 	+
+;	CMP #$F9 ;; Jump Object Memory Address
+;	BNE +
+;	JSR SetArbitraryMemAddress
+;	LDA (byte_RAM_5), Y
+;	AND #$0F
+;	STA byte_RAM_E5
+;	; If the upper nybble of the first byte is $F, this is a special object.
+;	LDA (byte_RAM_5), Y
+;	AND #$F0
+;	STA byte_RAM_E6
+;	STY byte_RAM_4
+;	JSR SetTileOffsetAndAreaPageAddr_Bank6
+;	JSR SetArbitraryJump
+;	JMP ReadLevelForegroundData_ProcessObject
+;	+
 	AND #$0F
 	STA byte_RAM_E8
 
@@ -149,6 +162,14 @@ SetArbitraryJump:
 	LDA #$0
 	STA byte_RAM_5
 	JMP ($c5)
+
+SetAddressSingle:
+	LDA (byte_RAM_5), Y
+	LDY #$0
+	STA ($c5), Y
+	LDY byte_RAM_F
+	INY
+	RTS
 
 SetAddressLinear:
 	LDY #$0
@@ -355,6 +376,19 @@ ConvertTilesIf:
 	DEX
 	BNE --
 	RTS
+
+IfLockedSkipX:
+	LDA KeyUsed
+	BEQ +
+	LDX byte_RAM_50E
+	LDY byte_RAM_F
+-
+	INY
+	DEX
+	BNE -
++   STY byte_RAM_F
+	RTS
+
 	
 
 LdDimensions:

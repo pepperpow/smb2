@@ -79,6 +79,8 @@ IFDEF TRANSITION_INVULN
 +
 ENDIF 
 IFDEF LEVEL_FLAGS
+	LDA #$0
+	STA KeyUsed
     TXA
     PHA
     LDX #CustomBitFlag_Crystal
@@ -90,6 +92,10 @@ IFDEF LEVEL_FLAGS
     BNE +
     LDA #2
     STA SubspaceVisits
++   LDX #CustomBitFlag_Key
+    JSR ChkFlagLevel
+    BNE +
+    INC KeyUsed
 +   PLA
     TAX
 ENDIF
@@ -139,14 +145,12 @@ AreaInitialization_CheckObjectCarriedOver:
 IFDEF PHANTO_CUSTOM
 	LDX #$05
 	STX byte_RAM_12
-	LDA PhantoActivateTimer
-	CMP #$FF
-	BEQ AreaInitialization_KeyCarryOver
-	LDA #$0
-	STA PhantoActivateTimer
-ENDIF
+	LDA ObjectCarriedOver
+	BEQ AreaInitialization_Phantop
+ELSE
 	LDA ObjectCarriedOver
 	BEQ AreaInitialization_SetEnemyData
+ENDIF
 
 	LDX #$05
 	STX byte_RAM_12
@@ -178,6 +182,9 @@ AreaInitialization_Rocket:
 	STA ObjectYLo, X
 	LDA #$78
 	STA ObjectXLo, X
+IFDEF PHANTO_CUSTOM
+	BNE AreaInitialization_Phantop
+ENDIF
 	BNE AreaInitialization_SetEnemyData
 
 AreaInitialization_NonRocketCarryOver:
@@ -192,10 +199,8 @@ AreaInitialization_NonRocketCarryOver:
 
 	PLA
 	CMP #Enemy_Key
-IFDEF CUSTOM_MUSH
-	BEQ AreaInitialization_KeyCarryOver
-    LDA StoredItem
-    CMP #Enemy_Key
+IFDEF PHANTO_CUSTOM
+	BNE AreaInitialization_Phantop
 ENDIF
 	BNE AreaInitialization_SetEnemyData
 
@@ -203,14 +208,29 @@ AreaInitialization_KeyCarryOver:
 	INC EnemyVariable, X
 	DEX
 	STX byte_RAM_12
+IFDEF PHANTO_CUSTOM
+	BNE +
+AreaInitialization_Phantop:
+	DEX
+	LDA PhantoActivateTimer
+	CMP #$FF
+	BEQ +
+	LDA #$0
+	STA PhantoActivateTimer
+	BEQ AreaInitialization_SetEnemyData
++
+ENDIF
 	LDA #EnemyState_Alive
 	STA EnemyState, X
 	LDA #Enemy_Phanto
 	STA ObjectType, X
 	JSR EnemyInit_Basic
 
+IFDEF PHANTO_CUSTOM
+	++
 	LDA #$00
-IFNDEF PHANTO_CUSTOM
+ELSE
+	LDA #$00
 	STA PhantoActivateTimer
 ENDIF
 	LDA ScreenYLo
@@ -1066,6 +1086,40 @@ EnemyInit_Bobomb:
 
 ; ---------------------------------------------------------------------------
 
+ BossDefeatMush:
+     LDA BossMushroom
+     BEQ +
+     LDX #CustomBitFlag_Mush1
+     JSR ChkFlagLevel
+     BEQ +
+     LDX byte_RAM_12
+     JSR CreateEnemy_TryAllSlots
+     BMI +
+     TXA
+     PHA
+ 	LDX byte_RAM_0
+     STX byte_RAM_12
+     LDY #$0
+     STY EnemyVariable, X
+     LDA PlayerLevelPowerup_1, Y
+     STA MushroomEffect, X
+     LDA #Enemy_Mushroom
+     STA ObjectType, X
+     JSR ProcessCustomPowerup    
+     PLA
+     STA byte_RAM_12
+ 	LDX byte_RAM_0
+ 	LDY byte_RAM_12
+ 	LDA unk_RAM_4EF, Y
+ 	STA ObjectXHi, X
+     LDA #$D0
+     STA ObjectYVelocity, X
+     LDA #$0
+     STA ObjectXVelocity, X
+ +   
+ 	LDX byte_RAM_12
+     RTS
+
 HandleEnemyState_Dead:
 	JSR sub_BANK3_B5CC
 
@@ -1110,7 +1164,7 @@ IFDEF LEVEL_FLAGS
      BEQ +
      INC World_Count_Bosses
  +
-	LDX byte_RAM_12
+	JSR BossDefeatMush
 ENDIF
 	JMP TurnIntoPuffOfSmoke
 
@@ -2610,8 +2664,10 @@ loc_BANK2_8CA3:
 	DEY
 	BPL loc_BANK2_8C93
 
+IFNDEF CUSTOM_MUSH
 	LDA KeyUsed
 	BNE loc_BANK2_8CAE
+ENDIF
 
 loc_BANK2_8CAB:
 	JMP EnemyInit_Stationary
@@ -2778,6 +2834,10 @@ loc_BANK2_8D7B:
 loc_BANK2_8D8A:
 	LDA HawkmouthClosing
 	BEQ loc_BANK2_8DBA
+IFDEF TEST_FLAG
+    LDA EnemyMovementDirection, Y
+	STA PlayerDirection
+ENDIF
 
 	DEC CrystalAndHawkmouthOpenSize
 	BNE loc_BANK2_8D78
@@ -2787,7 +2847,10 @@ loc_BANK2_8D8A:
 	LDA #TransitionType_Door
 	STA TransitionType
 	JSR DoAreaReset
-
+IFDEF CUSTOM_MUSH
+	LDA HawkmouthFlag
+	BNE SetGameModeBonusChance
+ELSE
 	LDY CurrentLevelRelative
 	LDA CurrentWorldTileset
 	CMP #$06
@@ -2798,6 +2861,7 @@ loc_BANK2_8D8A:
 loc_BANK2_8DAC:
 	CPY #$02
 	BCC SetGameModeBonusChance
+ENDIF
 
 	INC DoAreaTransition
 	RTS
@@ -3157,6 +3221,10 @@ EnemyInit_Birdo_SetType:
 	LDA Enemy_Birdo_Attributes, Y
 	STA ObjectAttributes, X
 	LDA #$02
+IFDEF TEST_FLAG
+	CLC
+    ADC BossHP
+ENDIF
 	STA EnemyHP, X
 
 EnemyInit_Birdo_Exit:
@@ -3625,8 +3693,13 @@ EnemyBehavior_SubspacePotion_CheckGroundCollision:
 	STA byte_RAM_5BB
 
 	; No Subspace Doors allowed in vertical levels
+IFDEF CUSTOM_MUSH
+	LDA InJarType
+	BEQ loc_BANK2_9198
+ELSE
 	LDA IsHorizontalLevel
 	BNE loc_BANK2_9198
+ENDIF
 
 	LDA #DPCM_BossHurt
 	STA DPCMQueue
@@ -4959,6 +5032,24 @@ EnemyBehavior_SubspaceDoor:
 	BNE loc_BANK2_9741
 
 	STA InSubspaceOrJar
+IFDEF TEST_FLAG
+	LDA VertSubspaceFlag
+	BEQ +
+VerticalResetSubspace:
+	LDA VertSubspaceFlag + 3
+	STA PlayerYHi
+	LDA VertSubspaceFlag + 4
+	STA PlayerYLo
+	LDA #$0
+	STA PlayerXHi
+	STA IsHorizontalLevel
+	STA VertSubspaceFlag
+	LDA VertSubspaceFlag + 1
+	STA ScreenYHi
+	LDA VertSubspaceFlag + 2
+	STA ScreenYLo
++
+ENDIF
 	JSR DoAreaReset
 
 	JMP loc_BANK2_97FF
@@ -5096,6 +5187,12 @@ loc_BANK2_97F7:
 	LDA InSubspaceOrJar
 	EOR #$02
 	STA InSubspaceOrJar
+IFDEF TEST_FLAG
+	LDA VertSubspaceFlag
+	BEQ +
+	JMP VerticalResetSubspace
++
+ENDIF
 
 loc_BANK2_97FF:
 	PLA
@@ -6604,6 +6701,11 @@ ApplyObjectPhysics_HorizontalSpecialCases:
 	CMP #Enemy_BeezoStraight
 	BEQ ApplyObjectPhysics_PositionHi
 
+IFDEF CUSTOM_MUSH
+	CMP #Enemy_Egg
+	BEQ ApplyObjectPhysics_PositionHi
+ENDIF
+
 	LDY IsHorizontalLevel
 	BEQ ApplyObjectPhysics_Exit
 
@@ -6765,6 +6867,10 @@ IFDEF RESET_CHR_LATCH
 ENDIF
 
 	LDA #$04
+IFDEF TEST_FLAG
+	CLC
+    ADC BossHP
+ENDIF
 	STA EnemyHP, X
 	LDA #$00
 	STA ObjectXVelocity, X
@@ -7619,6 +7725,10 @@ ENDIF
 	LDA #$04
 
 EnemyInit_Mouser_SetHP:
+IFDEF TEST_FLAG
+	CLC
+    ADC BossHP
+ENDIF
 	STA EnemyHP, X
 	RTS
 
@@ -7950,6 +8060,10 @@ ENDIF
 	LDA #$40
 	STA EnemyArray_477, X
 	LDA #$02
+IFDEF TEST_FLAG
+	CLC
+    ADC BossHP
+ENDIF
 	STA EnemyHP, X
 	JMP EnemyInit_Birdo_Exit
 
@@ -8933,6 +9047,10 @@ IFDEF RESET_CHR_LATCH
 ENDIF
 
 	LDA #$04
+IFDEF TEST_FLAG
+	CLC
+    ADC BossHP
+ENDIF
 	STA EnemyHP, X
 	LDA #$00
 	STA EnemyVariable, X
@@ -9575,6 +9693,10 @@ EnemyInit_HawkmouthBoss:
 	JSR EnemyInit_Hawkmouth ; Falls through to EnemyInit_Stationary
 
 	LDA #$03
+IFDEF TEST_FLAG
+	CLC
+    ADC BossHP
+ENDIF
 	STA EnemyHP, X
 	RTS
 
@@ -9713,6 +9835,10 @@ loc_BANK3_B09B:
 	BNE loc_BANK3_B0BA
 
 	LDA #$03 ; Hawkmouth Boss health?
+IFDEF TEST_FLAG
+	CLC
+    ADC BossHP
+ENDIF
 	STA EnemyHP, X
 	JSR sub_BANK3_B095
 
@@ -9921,6 +10047,10 @@ IFDEF RESET_CHR_LATCH
 ENDIF
 
 	LDA #$06
+IFDEF TEST_FLAG
+	CLC
+    ADC BossHP
+ENDIF
 	STA EnemyHP, X
 	LDA ObjectXHi, X
 	STA unk_RAM_4EF, X

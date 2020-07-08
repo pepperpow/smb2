@@ -3645,6 +3645,42 @@ loc_BANK6_9439:
 	STA byte_RAM_E6
 	LDA byte_RAM_E8
 	STA byte_RAM_D
+IFDEF TEST_FLAG
+	LDA VertSubspaceFlag
+	BEQ +
+	LDA ScreenYHi
+	STA byte_RAM_E8
+	STA byte_RAM_D
+	STA VertSubspaceFlag + 1
+	LDA ScreenYLo
+	STA VertSubspaceFlag + 2
+	LDY ScreenYHi
+	BEQ ++
+--  CLC
+	ADC #$10
+	DEY
+	BNE --
+++
+	AND #$F0
+	STA byte_RAM_E6
+	LDA #$0
+	STA byte_RAM_E5
+	LDA #$0
+	STA ScreenYHi
+	STA ScreenYLo
+	JSR SetTileOffsetAndAreaPageAddr_Bank6
+	LDA byte_RAM_1
+	CLC
+	ADC byte_RAM_E7
+	STA byte_RAM_1
+	LDA byte_RAM_2
+	ADC #$0
+	STA byte_RAM_2
+	LDY #$0
+	LDX #$0F
+	BNE GenerateSubspaceArea_TileRemapLoop:
++
+ENDIF
 	JSR SetTileOffsetAndAreaPageAddr_Bank6
 
 	LDY byte_RAM_E7
@@ -3666,6 +3702,15 @@ GenerateSubspaceArea_TileRemapLoop:
 	AND #$F0
 	BNE GenerateSubspaceArea_TileRemapLoop
 
+IFDEF TEST_FLAG
+	LDA VertSubspaceFlag
+	BEQ +
+	INY
+	DEX
+	BPL GenerateSubspaceArea_TileRemapLoop
+	RTS
++
+ENDIF
 	TYA
 	AND #$0F
 	TAY
@@ -3675,6 +3720,7 @@ GenerateSubspaceArea_TileRemapLoop:
 	BPL GenerateSubspaceArea_TileRemapLoop
 
 	RTS
+
 
 
 ;

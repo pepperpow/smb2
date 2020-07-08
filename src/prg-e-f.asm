@@ -719,7 +719,7 @@ IFDEF TEST_FLAG
 +
     LDA CurrentCharacter 
     CLC
-    ADC #$5
+    ADC #$3
     JSR Custom_BufferText
 ENDIF
 	LDA CurrentCharacter
@@ -793,7 +793,7 @@ IFDEF TEST_FLAG
 +
     LDA CurrentCharacter 
     CLC
-    ADC #$5
+    ADC #$3
     JSR Custom_BufferText
 	LDA #ScreenUpdateBuffer_RAM_301
 	STA ScreenUpdateIndex
@@ -1156,6 +1156,39 @@ VerticalLevel_CheckScroll:
 	BNE ShowPauseScreen
 
 VerticalLevel_ProcessFrame:
+IFDEF TEST_FLAG
+	LDA InSubspaceOrJar
+	BEQ +
+	LDA PPUScrollYMirror
+	STA PPUScrollYMirror_Backup
+	LDA PPUScrollXMirror
+	STA PPUScrollXMirror_Backup
+	LDA PPUScrollYHiMirror
+	STA PPUScrollYHiMirror_Backup
+	LDA PPUScrollXHiMirror
+	STA PPUScrollXHiMirror_Backup
+	LDA ScreenYHi
+	STA ScreenYHi_Backup
+	LDA ScreenYLo
+	STA ScreenYLo_Backup
+	LDA ScreenBoundaryLeftHi
+	STA ScreenBoundaryLeftHi_Backup
+	LDA #1
+	STA IsHorizontalLevel
+	STA VertSubspaceFlag
+	LDA PlayerYHi
+	STA VertSubspaceFlag + 3
+	STA PlayerXHi
+	STA CurrentLevelPage
+	LDA PlayerYHi
+	STA ScreenBoundaryLeftHi
+	LDA #$0
+	STA PlayerYHi
+	LDA #$0
+	STA ScreenBoundaryLeftLo
+	JMP InitializeSubArea
++
+ENDIF
 	JSR HideAllSprites
 
 	JSR RunFrame_Vertical
@@ -1434,6 +1467,27 @@ ExitSubArea_Loop:
 
 	JSR WaitForNMI_TurnOnPPU
 
+IFDEF TEST_FLAG
+	LDA IsHorizontalLevel
+	BNE + 
+	LDA PPUScrollYMirror_Backup
+	STA PPUScrollYMirror
+	LDA PPUScrollXMirror_Backup
+	STA PPUScrollXMirror
+	STA ScreenBoundaryLeftLo
+	LDA PPUScrollYHiMirror_Backup
+	STA PPUScrollYHiMirror
+	LDA PPUScrollXHiMirror_Backup
+	STA PPUScrollXHiMirror
+	LDA ScreenBoundaryLeftHi_Backup
+	STA ScreenBoundaryLeftHi
+	LDA ScreenYHi_Backup
+	STA ScreenYHi
+	LDA ScreenYLo_Backup
+	STA ScreenYLo
+	JMP VerticalLevel_CheckScroll
++
+ENDIF
 	JMP HorizontalLevel_CheckScroll
 
 ; ---------------------------------------------------------------------------
@@ -1476,6 +1530,7 @@ IFDEF FLAG_SYSTEM
     BEQ +
     CMP #$2
     BEQ ++
+	LDA #$0
 	JMP CharacterSelectMenu
 ++  LDA CurrentCharacter
     PHA
@@ -1505,7 +1560,13 @@ ENDIF
 
 loc_BANKF_E69F:
 IFDEF CUSTOM_MUSH
+	TYA
+	PHA
 	JSR RestorePlayerToFullHealth
+	JSR LevelInitialization
+	PLA
+	TAY
+	LDA #$0
 ELSE
 	LDA #PlayerHealth_2_HP
 	STA PlayerHealth
@@ -3653,8 +3714,10 @@ SetPlayerScreenPosition_Above:
 	STA PlayerAnimationFrame
 	LDA InJarType
 	STY InJarType
+IFNDEF TEST_FLAG
 	CMP #$02
 	BNE SetPlayerScreenPosition_ExitSubAreaJar
+ENDIF
 
 SetPlayerScreenPosition_ExitPointerJar:
 	STA DoAreaTransition
@@ -3711,6 +3774,10 @@ SetPlayerScreenPosition_DoClimbingTransition:
 ;
 GetMoveCameraX:
 	LDA #$00
+IFDEF TEST_FLAG
+	LDY IsHorizontalLevel
+	BEQ GetMoveCameraX_Exit
+ENDIF
 	LDY ScrollXLock
 	BNE GetMoveCameraX_Exit
 
@@ -4383,6 +4450,35 @@ ENDIF
 ;
 FollowCurrentAreaPointer:
 sub_BANKF_F6A1:
+IFDEF TEST_FLAG
+	LDA InJarType
+	CMP #1
+	BNE +
+	INC InJarType
+	LDA #PRGBank_8_9
+	JSR ChangeMappedPRGBankWithoutSaving
+	LDA CurrentLevel
+	STA AreaPointersByPage
+	LDA CurrentLevelArea
+	ASL
+	ASL
+	ASL
+	ASL
+	CLC
+	ADC CurrentLevelPage
+	STA AreaPointersByPage + 1
+
+	LDY CurrentLevel
+	LDA LevelAreaStartIndexes, Y
+	CLC
+	LDA #AreaIndex_Jar
+	STA CurrentLevelArea
+	LDA #$0
+	STA CurrentLevelEntryPage
+	LDA MMC3PRGBankTemp
+	JMP ChangeMappedPRGBank
++
+ENDIF
 	LDA CurrentLevelPage
 	ASL A
 	TAY
@@ -4705,7 +4801,9 @@ CopyJarDataToMemory:
 	CLC
 	ADC #AreaIndex_Jar
 	TAY
-
+IFDEF FLAG_SYSTEM
+    STA CurrentLevelAreaIndex
+ENDIF
 	; Calculate the pointer for the start of the level data.
 	LDA LevelDataPointersLo, Y
 	STA byte_RAM_5
@@ -4717,6 +4815,11 @@ CopyJarDataToMemory:
 	STA byte_RAM_2
 	LDY #<RawJarData
 	STY byte_RAM_1
+IFDEF CUSTOM_LEVEL_RLE
+	LDA LevelDataBank, Y
+	JSR ChangeMappedPRGBank
+ENDIF
+
 
 	; `Y = $00`
 CopyJarDataToMemory_Loop:
