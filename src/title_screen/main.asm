@@ -98,10 +98,9 @@ InitTitleBackgroundPalettesLoop:
 	LDA #$03
 	STA byte_RAM_10
 IFNDEF CUSTOM_TITLE
-	; LDA #$25
-	LDA #$50
+	LDA #$25
 ELSE
-    LDA #$16
+	LDA #$50
 ENDIF
 	STA byte_RAM_2
 	LDA #$20
