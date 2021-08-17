@@ -1,5 +1,4 @@
 
-; ELSE
 ;
 ; This table determines the collision properties of a tile
 ;

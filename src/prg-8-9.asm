@@ -36,26 +36,24 @@ LevelAreaStartIndexes:
 	.db $B4 ; Level 7-1
 	.db $BE ; Level 7-2
 	.db $C8 ; Level 7-3 (unused)
-
-
+ 
+IFDEF CUSTOM_LEVEL_RLE
+include "src/custom_levels/data.asm"
+ELSE
 ; Pointers to level data
 include "src/levels/level-data-pointers.asm"
-
 
 ; Include level data;
 ; see src/levels/level-data.asm for level format details
 include "src/levels/level-data.asm"
-
+ENDIF
 
 ; Pad out any remaining space
 ; @TODO Verify that this is OK if unused space is reclaimed
 LevelData_Unused:
 unusedSpace $A500,$FF
-
-
 ; Pointers to enemy data
 include "src/levels/enemy-data-pointers.asm"
-
 
 ; Include enemy data;
 ; see src/levels/enemy-data.asm for enemy format details

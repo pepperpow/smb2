@@ -52,9 +52,9 @@ ScreenUpdateBufferPointers:
 	.dw BonusChanceLayoutRAM
 
 PPUBuffer_CharacterSelect:
-	.db $21,$49,$06,$E9,$E5,$DE,$DA,$EC,$DE ; PLEASE
-	.db $21,$50,$06,$EC,$DE,$E5,$DE,$DC,$ED ; SELECT
-	.db $21,$8C,$06,$E9,$E5,$DA,$F2,$DE,$EB ; PLAYER
+	.db $21,$49,$06,'PLEASE' + $99
+	.db $21,$50,$06,'SELECT' + $99
+	.db $21,$8C,$06,'PLAYER' + $99
 	.db $20,$00,$20,$B7,$B8,$B7,$B8,$B7,$B8,$B7,$B8,$B7,$B8,$B7,$B8 ; Probably the checkerboard diamonds or w/e
 	.db $B7,$B8,$B7,$B8,$B7,$B8,$B7,$B8,$B7,$B8,$B7,$B8,$B7,$B8,$B7 ; $F
 	.db $B8,$B7,$B8,$B7,$B8 ; $1E
@@ -207,7 +207,7 @@ WorldStartingLevel:
 	.db $12
 	.db $14
 
-IFNDEF TEST_FLAG
+IFNDEF CUSTOM_PLAYER_RENDER
 PlayerSelectMarioSprites1:
 	.db $8F, $00, $00, $48
 	.db $8F, $00, $40, $50
@@ -256,7 +256,7 @@ PlayerSelectPrincessSprites2:
 	.db $9F, $2C, $03, $A8
 	.db $9F, $2E, $03, $B0
 ENDIF
-IFDEF TEST_FLAG
+IFDEF CUSTOM_PLAYER_RENDER
 PlayerSelectMarioSprites1:
 	.db $8F, $00, $00, $48
 	.db $8F, $02, $00, $50
@@ -354,14 +354,14 @@ PlayerSelectSpritePalettes_Princess:
 
 TitleCardPalettes:
 	.db $3F, $00, $20 ; PPU data
-	.db $38, $30, $1A, $0F
-	.db $38, $38, $0F, $0F
-	.db $38, $17, $17, $38
-	.db $38, $28, $18, $08
-	.db $38, $30, $27, $01
-	.db $38, $37, $27, $06
-	.db $38, $25, $36, $06
-	.db $38, $12, $36, $01
+	.db $30 + 8, $30 + 0, $10 + $A, $00 + $F
+	.db $30 + 8, $30 + 8, $00 + $F, $00 + $F
+	.db $30 + 8, $10 + 7, $10 + $7, $30 + $8
+	.db $30 + 8, $20 + 8, $10 + $8, $00 + $8
+	.db $30 + 8, $30 + 0, $20 + $7, $00 + $1
+	.db $30 + 8, $30 + 7, $20 + $7, $00 + $6
+	.db $30 + 8, $20 + 5, $30 + $6, $00 + $6
+	.db $30 + 8, $10 + 2, $30 + $6, $00 + $1
 	.db $00
 
 BonusChanceSpritePalettes:
@@ -636,7 +636,7 @@ DisplayLevelTitleCardAndMore_TitleCardPaletteLoop:
 	JSR WaitForNMI_TurnOnPPU
 
 	JSR RestorePlayerToFullHealth
-IFDEF FLAG_SYSTEM
+IFDEF RANDOMIZER_FLAGS
 	LDA PlayerHealth
 	CLC
 	ADC FreeHealth
@@ -706,7 +706,7 @@ loc_BANKF_E2B2:
 
 	LDA #Music1_CharacterSelect
 	STA MusicQueue1
-IFDEF TEST_FLAG
+IFDEF INDIE_LIVES
     DEC CurrentCharacter
 -   INC CurrentCharacter
     JSR ChkToNextValidCharacter 
@@ -779,7 +779,7 @@ loc_BANKF_E30B:
 	LDA CurrentCharacter
 	AND #$03
 	STA CurrentCharacter
-IFDEF TEST_FLAG
+IFDEF INDIE_LIVES
     JSR CharSelectInitialize
     JSR ChkToNextValidCharacter
     BNE CharacterSelect_ChangeCharacter
@@ -854,7 +854,7 @@ loc_BANKF_E37D:
 	DEX
 	BPL loc_BANKF_E37D
 
-IFDEF TEST_FLAG
+IFDEF INDIE_LIVES
     JSR LockCharacterSelectColor
 ENDIF
 
@@ -882,7 +882,7 @@ CharacterSelectMenuLoop:
 	AND #ControllerInput_A
 	BNE loc_BANKF_E3AE
 
-IFDEF FLAG_SYSTEM
+IFDEF CHAR_SWITCH
 	LDA CurrentCharacter
 	STA PreviousCharacter
 ENDIF
@@ -947,6 +947,56 @@ loc_BANKF_E3EC:
 ; This starts the game once RESET has done its thing.
 ; We also come here after choosing "RETRY" from the game over menu.
 ;
+IFDEF RANDOMIZER_FLAGS
+.include "src/extras/custom_flags.asm"
+LockCharacterSelectColor:
+      LDA CurrentCharacter
+      PHA
+      TYA
+      PHA
+
+      LDY #3
+      LDA #0 
+      STA CurrentCharacter
+      JMP +
+-     DEC CurrentCharacter
+      LDA CurrentCharacter
+      AND #3
+      CMP #0
+      BEQ +++
++     JSR ChkToNextValidCharacter
+      BNE ++
+      INY
+      INY
+      INY
+      INY
+      JMP     -
+++    LDA     #$0f
+      STA     PPUBuffer_301,Y
+      LDA     #$12
+      INY
+      STA     PPUBuffer_301,Y
+      INY
+      STA     PPUBuffer_301,Y
+      INY
+      STA     PPUBuffer_301,Y
+      INY
+      JMP     -
+
++++   PLA
+      TAY
+      PLA
+      STA CurrentCharacter
+      RTS
+CharSelectInitialize:
+      LDA CharacterLock_Variable ; check lock var, if 0 load new var
+      CMP #$F
+      BNE +
+      LDA CharacterInitialLock
+      STA CharacterLock_Variable
++     RTS
+ENDIF
+
 StartGame:
 	LDA #$00
 	STA PPUMASK
@@ -962,19 +1012,23 @@ StartGame:
 SetNumContinues:
 	LDA #$02 ; Number of continues on start
 	STA Continues
-IFDEF CUSTOM_MUSH
-	JSR LoadStartingInventory
+	; JSR LoadStartingInventory
+IFDEF RANDOMIZER_FLAGS
 StartingTransition:
 	LDA #TransitionType_Door
 	STA TransitionType
 	STA TransitionType_Init
+StartingPage:
+	LDA #$0
+	STA CurrentLevelEntryPage
+	STA CurrentLevelEntryPage_Init
 ENDIF
 
 ; We return here after picking "CONTINUE" from the game over menu.
 ContinueGame:
 	LDA #$03 ; Number of lives to start
 	STA ExtraLives
-IFDEF FLAG_SYSTEM
+IFDEF INDIE_LIVES
 ResetPlayer_Lives:
     LDY #$03
 -   STA PlayerIndependentLives, Y
@@ -1004,6 +1058,8 @@ IFDEF NO_CONTINUE
 	STA StopwatchTimer
 	STA PlayerCurrentSize
 	JSR DoCharacterSelectMenu
+ENDIF
+IFDEF CUSTOM_MUSH
 	JSR ResetPlayerAbility
 ENDIF
 
@@ -1156,7 +1212,7 @@ VerticalLevel_CheckScroll:
 	BNE ShowPauseScreen
 
 VerticalLevel_ProcessFrame:
-IFDEF TEST_FLAG
+IFDEF TEST_FLAG_VERT_SUB
 	LDA InSubspaceOrJar
 	BEQ +
 	LDA PPUScrollYMirror
@@ -1173,6 +1229,12 @@ IFDEF TEST_FLAG
 	STA ScreenYLo_Backup
 	LDA ScreenBoundaryLeftHi
 	STA ScreenBoundaryLeftHi_Backup
+	LDA byte_RAM_E1
+	STA byte_RAM_517
+	LDA ScreenYHi
+	STA VertSubspaceFlag + 1
+	LDA ScreenYLo
+	STA VertSubspaceFlag + 2
 	LDA #1
 	STA IsHorizontalLevel
 	STA VertSubspaceFlag
@@ -1460,6 +1522,12 @@ loc_BANKF_E64C:
 ExitSubArea_Loop:
 	JSR WaitForNMI
 
+IFDEF TEST_FLAG_VERT_SUB_EXIT
+	LDA IsHorizontalLevel
+	BNE + 
+	BEQ ++
++
+ENDIF
 	JSR sub_BANK0_87AA
 
 	LDA byte_RAM_537
@@ -1467,25 +1535,29 @@ ExitSubArea_Loop:
 
 	JSR WaitForNMI_TurnOnPPU
 
-IFDEF TEST_FLAG
+IFDEF TEST_FLAG_VERT_SUB
+++
 	LDA IsHorizontalLevel
 	BNE + 
+	STA ScreenBoundaryLeftHi
+	STA ScreenBoundaryLeftLo
+	STA ScreenBoundaryRightHi
+	LDA #$FF
+	STA ScreenBoundaryRightLo
 	LDA PPUScrollYMirror_Backup
 	STA PPUScrollYMirror
 	LDA PPUScrollXMirror_Backup
 	STA PPUScrollXMirror
-	STA ScreenBoundaryLeftLo
 	LDA PPUScrollYHiMirror_Backup
 	STA PPUScrollYHiMirror
 	LDA PPUScrollXHiMirror_Backup
 	STA PPUScrollXHiMirror
-	LDA ScreenBoundaryLeftHi_Backup
-	STA ScreenBoundaryLeftHi
 	LDA ScreenYHi_Backup
 	STA ScreenYHi
 	LDA ScreenYLo_Backup
 	STA ScreenYLo
-	JMP VerticalLevel_CheckScroll
+	JSR WaitForNMI_TurnOffPPU
+	JMP HidePauseScreen_Vertical
 +
 ENDIF
 	JMP HorizontalLevel_CheckScroll
@@ -1520,34 +1592,14 @@ loc_BANKF_E665:
 	JSR PauseScreen_Card
 
 AfterDeathJump:
-IFDEF FLAG_SYSTEM
+IFDEF INDIE_LIVES
+	JMP CharacterSelectMenu
     LDX CurrentCharacter
     LDA PlayerIndependentLives, X
-    BNE +
-	JMP CharacterSelectMenu
+    BEQ +
+	JMP StartLevelAfterTitleCard
 +
-    LDA CharSelectDeath
-    BEQ +
-    CMP #$2
-    BEQ ++
-	LDA #$0
 	JMP CharacterSelectMenu
-++  LDA CurrentCharacter
-    PHA
-    LDA PseudoRNGValues
-    EOR PseudoRNGValues + 1
-    STA CurrentCharacter
-    JSR ChkToNextValidCharacter
-    BEQ +
-    LDA PseudoRNGValues + 1
-    EOR PseudoRNGValues + 2
-    STA CurrentCharacter
-    JSR ChkToNextValidCharacter
-    BEQ +
--   DEC CurrentCharacter
-    JSR ChkToNextValidCharacter
-    BNE -
-+
 ENDIF
 IFNDEF CHARACTER_SELECT_AFTER_DEATH
 	JMP StartLevelAfterTitleCard
@@ -1559,11 +1611,10 @@ ENDIF
 ; ---------------------------------------------------------------------------
 
 loc_BANKF_E69F:
-IFDEF CUSTOM_MUSH
+IFDEF HEALTH_REVAMP
 	TYA
 	PHA
 	JSR RestorePlayerToFullHealth
-	JSR LevelInitialization
 	PLA
 	TAY
 	LDA #$0
@@ -1571,9 +1622,9 @@ ELSE
 	LDA #PlayerHealth_2_HP
 	STA PlayerHealth
 	LDA #$00
-	STA PlayerMaxHealth
 ENDIF
 
+	STA PlayerMaxHealth
 	STA KeyUsed
 	STA Mushroom1upPulled
 	STA Mushroom1Pulled
@@ -1736,6 +1787,10 @@ EndOfLevel:
 	LDA #Music2_StopMusic ; Stop music
 	STA MusicQueue2
 
+	; Increase current characters "contribution" counter
+	LDX CurrentCharacter
+	INC CharacterLevelsCompleted, X
+
 IFDEF FLAG_SYSTEM
     LDA Level_Count_Crystals
     CMP CrystalCondition
@@ -1759,9 +1814,15 @@ IFDEF FLAG_SYSTEM
     JMP EndingSceneRoutine
 ENDIF
 
-	; Increase current characters "contribution" counter
-	LDX CurrentCharacter
-	INC CharacterLevelsCompleted, X
+IFDEF RANDOMIZER_FLAGS
+	LDA WinLevel
+    CMP #$FF
+    BNE +
+    JMP EndingSceneRoutine
++   CMP CurrentLevelAreaIndex
+    BNE EndOfLevelSlotMachine
+    JMP EndingSceneRoutine
+ENDIF
 
 	; Check if we've completed the final level
 	LDA CurrentLevel
@@ -1831,7 +1892,7 @@ loc_BANKF_E7F2:
 	STA ObjectXLo + 5
 	JSR WaitForNMI_TurnOnPPU
 
-IFDEF FLAG_SYSTEM
+IFDEF INDIE_LIVES
     LDA IndependentLives
     BEQ +
     LDX CurrentCharacter
@@ -1845,13 +1906,15 @@ loc_BANKF_E7FD:
 	BNE StartSlotMachine
 
 GoToNextLevel:
-IFDEF FLAG_SYSTEM
+IFDEF INDIE_LIVES
     LDA IndependentLives
     BEQ +
     LDA ExtraLives
     LDX CurrentCharacter
     STA PlayerIndependentLives, X
 +
+ENDIF
+IFDEF CUSTOM_LEVEL_RLE
 	JMP GoToNextLevel_SameWorld
 ENDIF
 	; Check if this is the last level before the next world
@@ -2127,6 +2190,7 @@ EndingSceneRoutine:
 
 	INC GameMilestoneCounter
 
+IFNDEF EXCLUDE_MARIO_DREAM
 	JSR ContributorScene
 
 	JSR WaitForNMI_TurnOffPPU
@@ -2145,6 +2209,10 @@ SetupMarioSleepingScene:
 
 	INC GameMilestoneCounter
 	JMP MarioSleepingScene
+ELSE
+	JMP ContributorScene
+ENDIF
+
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -2309,6 +2377,10 @@ ENDIF
 
 IFDEF CUSTOM_MUSH
 	.include "src/extras/player-stuff.asm"
+ENDIF
+
+IFDEF CHAR_SWITCH
+.include "src/extras/player/char_switch_f.asm"
 ENDIF
 
 ;
@@ -2964,7 +3036,7 @@ UpdatePPUFBWO_CopySingleTileSkip:
 
 
 IFDEF DEBUG
-	.include "src/extras/debug-f.asm"
+	.include "src/extras/debug/debug-f.asm"
 ENDIF
 
 IF INES_MAPPER == MAPPER_FME7
@@ -3386,7 +3458,19 @@ RunFrame_Common:
 
 	JSR AreaMainRoutine
 
+IFNDEF SECONDARY_ROUTINE_MOVE
 	JSR AreaSecondaryRoutine
+ELSE
+	LDA #PRGBank_A_B
+	JSR ChangeMappedPRGBank
+	JSR AreaSecondaryRoutine
+	LDA #PRGBank_2_3
+	JSR ChangeMappedPRGBank
+	LDA POWQuakeTimer
+	BEQ +
+	JSR KillOnscreenEnemies
++
+ENDIF
 
 IFDEF CONTROLLER_2_DEBUG
 	JSR AreaDebugRoutine
@@ -3409,27 +3493,20 @@ DecrementPlayerStateTimers_Zero:
 	BPL DecrementPlayerStateTimers_Loop
 
 IFDEF TRANSITION_INVULN
-    LDA DamageInvulnTime
-    BNE +
-    LDA AreaTransitioned_Invuln
-    BEQ +
-    STA DamageInvulnTime
-    LDA Player1JoypadHeld
-    AND #$F
-    BNE ++
     LDA Player1JoypadPress
+	AND #ControllerInput_Left | ControllerInput_Right
+    BNE +
+    LDA DamageInvulnTime
     BNE ++
+    LDA AreaTransitioned_Invuln
+    STA DamageInvulnTime
     LDA PlayerYVelocity
-	BMI +
+	BMI ++
     CMP #$10
-    BCC +
-++  LDA #0
+    BCC ++
++   LDA #0
     STA AreaTransitioned_Invuln
-+
-	LDA ProjectileTimer
-	BEQ +
-	DEC ProjectileTimer
-+
+++
 ENDIF
 	; If invincible, decrement timer every 8 frames
 	LDY StarInvincibilityTimer
@@ -3660,9 +3737,6 @@ SetPlayerScreenPosition_Below:
 	LDA #$00
 	STA PlayerStateTimer
 IFDEF FALL_DEFENSE
-    LDX #CustomBitFlag_FallDefense
-    JSR ChkFlagPlayer
-    BNE +
     LDA #$80
     STA PlayerYVelocity
     LDA #SoundEffect1_EnemyHit
@@ -3714,7 +3788,7 @@ SetPlayerScreenPosition_Above:
 	STA PlayerAnimationFrame
 	LDA InJarType
 	STY InJarType
-IFNDEF TEST_FLAG
+IFNDEF DISABLED
 	CMP #$02
 	BNE SetPlayerScreenPosition_ExitSubAreaJar
 ENDIF
@@ -3774,10 +3848,6 @@ SetPlayerScreenPosition_DoClimbingTransition:
 ;
 GetMoveCameraX:
 	LDA #$00
-IFDEF TEST_FLAG
-	LDY IsHorizontalLevel
-	BEQ GetMoveCameraX_Exit
-ENDIF
 	LDY ScrollXLock
 	BNE GetMoveCameraX_Exit
 
@@ -3793,9 +3863,9 @@ GetMoveCameraX_Exit:
 
 IFDEF CUSTOM_PLAYER_RENDER
 
-.include "src/extras/custom-player-render-all.asm"
+.include "src/extras/player/custom-player-render-all.asm"
 
-ELSE 
+ELSE
 
 .include "src/systems/render-player.asm"
 
@@ -4356,7 +4426,7 @@ CheckCustomSolidness:
 ENDIF
 
 IFDEF ENABLE_TILE_ATTRIBUTES_TABLE
-	.include "src/extras/tile-attribute-table.asm"
+	.include "src/extras/level_gen/tile-attribute-table.asm"
 ENDIF
 ;
 ; ### Warp destination lookup table
@@ -4443,15 +4513,16 @@ ReadJoypadLoop:
 	RTS
 
 IFDEF HEALTH_REVAMP
-	.include "src/extras/health-revamp-3.asm"
+	.include "src/extras/ui/health-revamp-3.asm"
 ENDIF
 ;
 ; Load the area specified by the area pointer at the current page
 ;
 FollowCurrentAreaPointer:
 sub_BANKF_F6A1:
-IFDEF TEST_FLAG
+IFDEF CUSTOM_LEVEL_RLE
 	LDA InJarType
+	BEQ +
 	CMP #1
 	BNE +
 	INC InJarType
@@ -4642,7 +4713,7 @@ LoadLevelIntoMemoly_NoBank:
 	CLC
 	ADC CurrentLevelArea
 	TAY
-IFDEF FLAG_SYSTEM
+IFDEF RANDOMIZER_FLAGS
     STA CurrentLevelAreaIndex
 ENDIF
 
@@ -4661,24 +4732,13 @@ LoadLevelDataPtrIntoMemoly:
 	LDA #PRGBank_6_7
 	JSR ChangeMappedPRGBank
 	RTS
-CopyLevelDataMemory_Switch:
-	DEY
-	DEY
-	DEY
-	CLC
-	TYA
-	ADC byte_RAM_7
-	BCC ++
-	INC byte_RAM_8
-	++
-	STA byte_RAM_7
 
+CopyLevelDataMemory_Switch:
 	LDA byte_RAM_9
 	JSR ChangeMappedPRGBank
-
 	; Blindly copy 255 bytes of data, which is presumed to contain the full area.
-	LDY #$4
-	LDX #$FB
+	LDY #$2
+	LDX #$FD
 	-
 	LDA (byte_RAM_7), Y
 	STA (byte_RAM_5), Y
@@ -4687,8 +4747,6 @@ CopyLevelDataMemory_Switch:
 	BNE -
 	LDA #PRGBank_6_7
 	JSR ChangeMappedPRGBank
-	LDY #$4
-	STY byte_RAM_4
 	RTS
 ENDIF
 CopyLevelDataToMemory:
@@ -4698,7 +4756,7 @@ CopyLevelDataToMemory:
 	CLC
 	ADC CurrentLevelArea
 	TAY
-IFDEF FLAG_SYSTEM
+IFDEF RANDOMIZER_FLAGS
     STA CurrentLevelAreaIndex
 ENDIF
 
@@ -4801,7 +4859,7 @@ CopyJarDataToMemory:
 	CLC
 	ADC #AreaIndex_Jar
 	TAY
-IFDEF FLAG_SYSTEM
+IFDEF RANDOMIZER_FLAGS
     STA CurrentLevelAreaIndex
 ENDIF
 	; Calculate the pointer for the start of the level data.
@@ -4843,7 +4901,7 @@ CopyJarDataToMemory_Exit:
 
 
 IFNDEF MIGRATE_QUADS
-.include "src/systems/tile-quads.asm"
+.include "src/systems/tile_quads.asm"
 ENDIF
 
 EndOfLevelDoor: ; PPU data

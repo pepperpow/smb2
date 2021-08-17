@@ -7,6 +7,27 @@
 ; Include COMPATIBILITY-flag-related macros
 include "src/compatibility-shims.asm"
 
+pal_grey = #$00
+pal_bluA = #$01
+pal_bluB = #$02
+pal_purp = #$03
+pal_mage = #$04
+pal_redA = #$05
+pal_redB = #$06
+pal_orng = #$07
+pal_yell = #$08
+pal_grnA = #$09
+pal_grnB = #$0A
+pal_teal = #$0B
+pal_cyan = #$0C
+pal_blkA = #$0D
+pal_blkB = #$0E
+pal_blkC = #$0F
+
+MACRO spr_pal p0, p1, p2, p3, o0, o1, o2, o3
+	.db p0, p1, p2, p3
+ENDM
+
 ;
 ; Pad out unused space used in the original, if needed
 ;

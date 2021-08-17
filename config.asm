@@ -6,7 +6,7 @@
 ;
 ; By default, this repository is set up to build an identical copy
 ; of the original PRG0 revision of Super Mario Bros. 2 (USA).
-;
+
 ; You can tweak the build settings below. To remove
 ; the default options, comment them out.
 ; (Changing the assignment to 0 won't work.)
@@ -39,8 +39,8 @@ COMPATIBILITY = 1
 ; within them to the end, making it easier to add your own code anywhere.
 ; ...but it might also cause problems if data gets relocated
 ; when it isn't properly pointed to.
-;PRESERVE_UNUSED_SPACE = 1
 
+; PRESERVE_UNUSED_SPACE = 1
 
 ; ----------------------------------------
 ; Build PRG1 / Revision A ROM.
@@ -61,54 +61,54 @@ COMPATIBILITY = 1
 ;          at the worst possible time.
 ;          The fix just waits for an NMI cycle before doing its work.
 ;
-REV_A = 1
+; REV_A = 1
+;
+;
+;
+;; ----------------------------------------
+;; Patches that fix bugs or glitches
+;
+;
+;; Show all 8 frames of CHR cycling animation
+; FIX_CHR_CYCLE = 1
+;
+;; Fixes the POW falling log glitch
+; FIX_POW_LOG_GLITCH = 1
+;
+;; Fixes vine climbing bug when holding up and down simultaneously
+; FIX_CLIMB_ZIP = 1
+;
+;; Fixes green platform tiles in Subspace
+; FIX_SUBSPACE_TILES = 1
 
 
-
-; ----------------------------------------
-; Patches that fix bugs or glitches
-
-
-; Show all 8 frames of CHR cycling animation
-FIX_CHR_CYCLE = 1
-
-; Fixes the POW falling log glitch
-FIX_POW_LOG_GLITCH = 1
-
-; Fixes vine climbing bug when holding up and down simultaneously
-FIX_CLIMB_ZIP = 1
-
-; Fixes green platform tiles in Subspace
-FIX_SUBSPACE_TILES = 1
+;; ----------------------------------------
+;; Patches that alter the game in
+;; interesting or useful ways
 
 
-; ----------------------------------------
-; Patches that alter the game in
-; interesting or useful ways
+;; Skips Bonus Chance after the end of a level
+;; DISABLE_BONUS_CHANCE = 1
 
+;; Go to the Charater Select screen after death
+;; CHARACTER_SELECT_AFTER_DEATH = 1
 
-; Skips Bonus Chance after the end of a level
-; DISABLE_BONUS_CHANCE = 1
+;; Restore the prototype's DPCM samples and/or music;
+;; NOTE: The prototype underground music requires the shortened prototype ending music to fit
+;; everything in the music header table. Use EXPAND_MUSIC to remove this restriction.
+;; PROTOTYPE_DPCM_SAMPLES = 1
+;; PROTOTYPE_INSTRUMENTS = 1
+;; PROTOTYPE_MUSIC_STARMAN = 1
+;; PROTOTYPE_MUSIC_UNDERGROUND = 1
+;; PROTOTYPE_MUSIC_ENDING = 1
 
-; Go to the Charater Select screen after death
-; CHARACTER_SELECT_AFTER_DEATH = 1
+;; Include debugging tools
+;; (push Select to open the debug menu)
+;; DEBUG = 1
 
-; Restore the prototype's DPCM samples and/or music;
-; NOTE: The prototype underground music requires the shortened prototype ending music to fit
-; everything in the music header table. Use EXPAND_MUSIC to remove this restriction.
-; PROTOTYPE_DPCM_SAMPLES = 1
-; PROTOTYPE_INSTRUMENTS = 1
-; PROTOTYPE_MUSIC_STARMAN = 1
-; PROTOTYPE_MUSIC_UNDERGROUND = 1
-; PROTOTYPE_MUSIC_ENDING = 1
-
-; Include debugging tools
-; (push Select to open the debug menu)
-; DEBUG = 1
-
-; Include controller 2 debug features
-; (@TODO: explain usage)
-; CONTROLLER_2_DEBUG = 1
+;; Include controller 2 debug features
+;; (@TODO: explain usage)
+;; CONTROLLER_2_DEBUG = 1
 
 
 
@@ -118,8 +118,8 @@ FIX_SUBSPACE_TILES = 1
 
 
 ; Expand PRG and/or CHR to max capacity
-EXPAND_PRG = 1
-EXPAND_CHR = 1
+; EXPAND_PRG = 1
+; EXPAND_CHR = 1
 
 ; Use MMC5 (mapper 5) instead of MMC3 (mapper 4)
 ; Based on RetroRain's MMC5 patch (https://www.romhacking.net/hacks/2568)
@@ -141,7 +141,7 @@ EXPAND_CHR = 1
 ; EXPAND_MUSIC = 1
 
 ; Encode world tileset in unused 3 bits of area header byte 2
-AREA_HEADER_TILESET = 1
+; AREA_HEADER_TILESET = 1
 
 ; Checks the CHR latch variable to reload the CHR data
 ; RESET_CHR_LATCH = 1
@@ -153,7 +153,7 @@ AREA_HEADER_TILESET = 1
 ; LEVEL_ENGINE_UPGRADES = 1
 
 ; Enables quicksand tile behavior outside of worlds 2 and 6
-ALWAYS_ALLOW_QUICKSAND = 1
+; ALWAYS_ALLOW_QUICKSAND = 1
 
 ; Use a tile attributes table for rather than TileSolidnessTable
 ; ENABLE_TILE_ATTRIBUTES_TABLE = 1
@@ -162,61 +162,79 @@ ALWAYS_ALLOW_QUICKSAND = 1
 ; DISABLE_DOOR_POINTERS = 1uuuuuuuuuuuuuu
 
 ; Enables full-page door/vine searching so that entrances don't need to align
-ROBUST_TRANSITION_SEARCH = 1
+; ROBUST_TRANSITION_SEARCH = 1
 
-JUMP_THROW_FIX = 1
+;; Fixes and Simple Mechanics
+REV_A = 1 ; Revision A
+ALWAYS_ALLOW_QUICKSAND = 1 ; Quicksand in All Worlds
+ROBUST_TRANSITION_SEARCH = 1 ; Align Transitions in all cases
+AREA_HEADER_TILESET = 1
+FIX_POW_LOG_GLITCH = 1
+FIX_CHR_CYCLE = 1
+FIX_CLIMB_ZIP = 1
+FIX_SUBSPACE_TILES = 1
 
-; SCROLL_FIX = 1
+TRANSITION_INVULN = 1 ; Invuln on transition
+JUMP_THROW_FIX = 1 ; Don't drop item on squat jump
+HEALTH_REVAMP = 1 ; Show over 4 health
+SMALL_HITBOX = 1 ; Crouch hitbox for hit character
+BLOCK_CHECK = 1 ; Hit objects from below
+SHELL_FIX = 1 ; Shell bounces
+SCROLL_FIX = 1 ; Scroll always after transition
+NO_CONTINUE = 1 ; Disable continue from beginning of world
+CARRY_ON_VINE = 1 ; Carry potion/key from vine
+HAWKMOUTH_FIX = 1 ; Hawkmouth in two directions
+TEST_FLAG_VERT_SUB = 1 ; Vertical subspace
+MUSH_BLOCK_FIX = 1 ; block fix
 
-CUSTOM_LEVEL_RLE = 1
+AreaTransitioned_Invuln = $7603
+CharacterLock_Variable = $7610
+VertSubspaceFlag = $73F4
+CurrentLevelAreaIndex = $73F0
+PlayerIndependentLives = $73F8
+BossHP = $73F2
 
-CUSTOM_PLAYER_RENDER = 1
-
-; MIGRATE_QUADS = 1
-
-
-TRANSITION_INVULN = 1
-
-HEALTH_REVAMP = 1
-
-.include "src/extras/player-defines.asm"
-
-FALL_DEFENSE = 1
-
-PLAYER_STUFF_TITLE = 1
-
-SMALL_HITBOX = 1
-
+; ;; Code changes
+CUSTOM_LEVEL_RLE = 1 ; Custom Level Generation
+RANDOMIZER_FLAGS = 1 ; Flags
+CHAR_SWITCH = 1 ; char switch
 DRAW_SECRET = 1
+CUSTOM_PLAYER_RENDER = 1
+CHARACTER_SELECT_AFTER_DEATH = 1
+INDIE_LIVES = 1
 
-BLOCK_CHECK = 1
+; ;; Space changes
+EXPAND_PRG = 1
+EXPAND_CHR = 1
+CUSTOM_CHR = 1
+; MMC5 = 1
+CUSTOM_TITLE = 1 ; New Title
+; EXCLUDE_MARIO_DREAM = 1 ; Remove Mario Dream
+REMOVE_UNUSED_DPCMS = 1 ; remove unused dpcms
+; TODO: Bug with POW Blocks, just needs to change where damage function works
+; SECONDARY_ROUTINE_MOVE = 1 ; Move health render to another bank
+; TODO: Bug with Mushroom Blocks which need this for rendering back to tile
+MIGRATE_QUADS = 1 ; Move Quad Info to bank 1
 
-CUSTOM_TILE_IDS = 1
+;FALL_DEFENSE = 1
+;CUSTOM_TITLE = 1
+;BLOCK_CHECK = 1
+;CUSTOM_TILE_IDS = 1
 
-; DEBUG = 1
+;;; DEBUG = 1
 
-FLAG_SYSTEM = 1
+;FLAG_SYSTEM = 1
+;LEVEL_FLAGS = 1
+;DAMAGE_RESIST = 1
+;LOCKED_DOOR = 1
 
-LEVEL_FLAGS = 1
+;TEST_FLAG = 1
 
-DAMAGE_RESIST = 1
+;;CUSTOM_UNUSED = 1
 
-LOCKED_DOOR = 1
+;CUSTOM_MUSH = 1
 
-TEST_FLAG = 1
+;PHANTO_CUSTOM = 1
 
-CUSTOM_UNUSED = 1
 
-CUSTOM_MUSH = 1
-
-SHELL_FIX = 1
-
-SCROLL_FIX = 1
-
-PHANTO_CUSTOM = 1
-
-REMOVE_DPCM = 1
-
-NO_CONTINUE = 1
-
-.endinl
+endinl

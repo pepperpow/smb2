@@ -148,7 +148,7 @@ ENDIF
 
 ; -----------------------------------------
 ; include CHR-ROM
-IFDEF CUSTOM_MUSH
+IFDEF CUSTOM_CHR
 .incbin "smb2-custom.chr"
 ELSE
 .incbin "smb2.chr"

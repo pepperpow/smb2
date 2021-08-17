@@ -718,9 +718,15 @@ CopyBackgroundToPPUBuffer_Vertical_Loop:
 	LDY ReadLevelDataOffset
 	LDA (ReadLevelDataAddress), Y
 IFDEF CUSTOM_TILE_IDS
-	.include "src/extras/custom-tile-id.asm"
+	.include "src/extras/level_gen/custom-tile-id.asm"
 	JMP ++ ;; leaves to flag outside...
 	+
+ENDIF
+IFDEF DRAW_SECRET
+	JSR DetectSecret
+ENDIF
+IFDEF CUSTOM_LEVEL_RLE
+	JSR DetectLocked
 ENDIF
 	STA DrawTileId
 	AND #%11000000
@@ -733,8 +739,14 @@ ENDIF
 	STA byte_RAM_0
 	LDA TileQuadPointersHi, Y
 	STA byte_RAM_1
+IFNDEF CUSTOM_LEVEL_RLE
 	LDY ReadLevelDataOffset
 	LDA (ReadLevelDataAddress), Y
+ENDIF
+IFDEF CUSTOM_LEVEL_RLE
+	LDA DrawTileId
+ENDIF
+
 	ASL A
 	ASL A
 	TAY
@@ -1456,7 +1468,7 @@ UseSubareaScreenBoundaries:
 	STA PPUScrollXMirror_Backup
 	LDA PPUScrollXHiMirror
 	STA PPUScrollXHiMirror_Backup
-IFDEF TEST_FLAG
+IFDEF TEST_FLAG_VERT_SUB
 	LDA PPUScrollYMirror
 	STA PPUScrollYMirror_Backup
 	LDA PPUScrollYHiMirror
@@ -1729,14 +1741,11 @@ loc_BANK0_8856:
 	RTS
 
 IFDEF DRAW_SECRET
-DetectSecret:
-	.include "src/extras/secret-detection.asm"
-	RTS
-DetectLocked:
-	.include "src/extras/locked-detection.asm"
-	RTS
+	.include "src/extras/level_gen/secret-detection.asm"
 ENDIF
-
+IFDEF CUSTOM_LEVEL_RLE
+	.include "src/extras/level_gen/locked-detection.asm"
+ENDIF
 ;
 ; Draws the background data to the PPU buffer
 ;
@@ -1752,12 +1761,14 @@ CopyBackgroundToPPUBuffer_Horizontal_Loop:
 	LDY ReadLevelDataOffset
 	LDA (ReadLevelDataAddress), Y
 IFDEF CUSTOM_TILE_IDS
-	.include "src/extras/custom-tile-id.asm"
+	.include "src/extras/level_gen/custom-tile-id.asm"
 	JMP ++ ;; leaves to flag outside...
 	+
 ENDIF
 IFDEF DRAW_SECRET
 	JSR DetectSecret
+ENDIF
+IFDEF CUSTOM_LEVEL_RLE
 	JSR DetectLocked
 ENDIF
 	STA DrawTileId
@@ -1772,11 +1783,11 @@ ENDIF
 	LDA TileQuadPointersHi, Y
 	STA byte_RAM_1
 
-IFNDEF DRAW_SECRET
+IFNDEF CUSTOM_LEVEL_RLE
 	LDY ReadLevelDataOffset
 	LDA (ReadLevelDataAddress), Y
 ENDIF
-IFDEF DRAW_SECRET
+IFDEF CUSTOM_LEVEL_RLE
 	LDA DrawTileId
 ENDIF
 	ASL A
@@ -1991,13 +2002,12 @@ loc_BANK0_8A26:
 	.dw HandlePlayerState_Dying ; Dying
 	.dw HandlePlayerState_ChangingSize ; Changing size
 
-IFDEF CUSTOM_MUSH
-	.include "src/extras/char-switch-overworld.asm"
-ENDIF
-
+IFDEF CHAR_SWITCH
+	.include "src/extras/player/char_switch_0.asm"
 HandlePlayerState_Normal:
-IFDEF CUSTOM_MUSH
     JSR HandlePlayer_ChangeChar
+ELSE
+HandlePlayerState_Normal:
 ENDIF
 	JSR PlayerGravity
 
@@ -2060,8 +2070,8 @@ LoseALife:
 	STA PlayerAnimationFrame
 	LDY #$01 ; Set game mode to title card
 	DEC ExtraLives
-IFDEF FLAG_SYSTEM
-	.include "src/extras/lose-a-life-independent-check.asm"
+IFDEF INDIE_LIVES
+	.include "src/extras/player/lose-a-life-independent-check.asm"
 ENDIF
 	BNE SetGameModeAfterDeath
 
@@ -2297,10 +2307,8 @@ HandlePlayerState_GoingDownJar:
 	RTS
 
 HandlePlayerState_GoingDownJar_NonWarp:
-IFNDEF CUSTOM_MUSH
 	CMP #$01
 	BEQ HandlePlayerState_GoingDownJar_Regular
-ENDIF
 
 	STA DoAreaTransition
 	RTS
@@ -2387,6 +2395,18 @@ HandlePlayerState_JustClimb_Physics:
 	JMP ApplyPlayerPhysicsY
 
 HandlePlayerState_SetClimbing:
+IFDEF RANDOMIZER_FLAGS
+	JSR PlayerTileCollision_CheckClimbable
+	BCS +ok
+	LDY #$02
+	LDA byte_RAM_0
+	JSR CheckTileUsesCollisionType
+	BCC +ok
+	JSR AreaTransitionPlacement_DoorCustom
+	LDA #$0
+	STA PlayerState
++ok
+ENDIF
 	LDA #PlayerState_Climbing
 	STA PlayerState
 	RTS
@@ -2405,7 +2425,7 @@ HandlePlayerState_HawkmouthEating:
 
 	LDA #ObjAttrib_BehindBackground
 	STA PlayerAttributes
-IFDEF TEST_FLAG
+IFDEF HAWKMOUTH_FIX
 	LDA PlayerDirection
 	BEQ +
 	LDA #$04
@@ -2508,7 +2528,7 @@ loc_BANK0_8C2B:
 	BPL loc_BANK0_8C3D ; branch if not pressing A Button
 
 	INC PlayerInAir
-IFDEF FLAG_SYSTEM
+IFDEF CUSTOM_PLAYER_RENDER
 	LDA HoldingItem
 	BNE +
 	LDA #SpriteAnimation_Jumping
@@ -2833,12 +2853,11 @@ PlayerWalkJumpAnim:
 	LDA PlayerInAir
 	BEQ PlayerWalkAnim
 
-IFNDEF CUSTOM_MUSH
+IFNDEF CUSTOM_PLAYER_RENDER
 	LDA CurrentCharacter ; does this character get to flutter jump?
 	CMP #Character_Luigi
 	BNE ExitPlayerWalkJumpAnim
-ENDIF
-IFDEF CUSTOM_MUSH
+ELSE
 	LDX CurrentCharacter ; does this character get to flutter jump?
     LDA DokiMode, X
     AND #CustomCharFlag_Fluttering
@@ -3653,7 +3672,7 @@ PlayerTileCollision_Climbable:
 	BEQ PlayerTileCollision_Climbable_Exit
 
 	LDY HoldingItem
-IFDEF CUSTOM_MUSH
+IFDEF CARRY_ON_VINE
 	BEQ +
 	LDX ObjectBeingCarriedIndex
 	LDY ObjectType, X
@@ -3916,7 +3935,7 @@ ENDIF
 
 	; In SubSpace, a non-enterable jar can be entered
 	; Now Y = $00
-IFDEF TEST_FLAG
+IFDEF CUSTOM_LEVEL_RLE
 NopThisForWarps:
 	LDA #$0
 ENDIF
@@ -4039,7 +4058,7 @@ loc_BANK0_917C:
 	LDX HoldingItem
 	BEQ loc_BANK0_91AE
 
-IFDEF CUSTOM_MUSH
+IFDEF CARRY_ON_VINE
 	LDX ObjectBeingCarriedIndex
 	LDY ObjectType, X
 	CPY #Enemy_Key
@@ -4172,6 +4191,13 @@ IFDEF LOCKED_DOOR
     BEQ SetFlagUnlock  ;; still need to have an object to set ?
     LDA KeyUsed
 	BNE SetFlagUnlock
+ENDIF
+IFDEF CUSTOM_LEVEL_RLE
+	LDA KeyUsed
+	BEQ +no
+	JSR DoorAnimation_Unlocked
+	JMP DoorHandling_GoThroughDoor
++no
 ENDIF
 	LDA HoldingItem
 	; don't come to a locked door empty-handed
@@ -4974,9 +5000,37 @@ AreaTransitionPlacement_DoorCustom_InnerLoop:
 
 	; No matches on this tile, check the next one or give up
 	DEC byte_RAM_E7
-	BEQ AreaTransitionPlacement_DoorCustom_Fallback
+	BEQ +vine
 
 	JMP AreaTransitionPlacement_DoorCustom_Loop
+
++vine
+; 	LDA #$EF
+; 	STA byte_RAM_E7
+; AreaTransitionPlacement_VineCustom_Loop:
+; 	; Read the target tile
+; 	LDY byte_RAM_E7
+; 	LDA (byte_RAM_1), Y
+; 	LDY #$09
+
+; AreaTransitionPlacement_VineCustom_InnerLoop:
+; 	; See if it matches any door tile
+; 	CMP ClimbableTiles - 1, Y
+; 	BEQ AreaTransitionPlacement_DoorCustom_Exit
+; 	DEY
+; 	BNE AreaTransitionPlacement_VineCustom_InnerLoop
+;     CMP #BackgroundTile_Sky
+; 	BEQ AreaTransitionPlacement_DoorCustom_Exit
+; 	CMP #BackgroundTile_JarTopPointer
+; 	BEQ AreaTransitionPlacement_DoorCustom_Exit
+; 	CMP #BackgroundTile_JarTopGeneric
+; 	BEQ AreaTransitionPlacement_DoorCustom_Exit
+
+; 	; No matches on this tile, check the next one or give up
+; 	DEC byte_RAM_E7
+; 	BEQ AreaTransitionPlacement_DoorCustom_Fallback
+
+; 	JMP AreaTransitionPlacement_VineCustom_Loop
 
 AreaTransitionPlacement_DoorCustom_Fallback:
 	LDA #$20
@@ -5203,6 +5257,12 @@ AreaTransitionPlacement_Rocket:
 	JSR AreaTransitionPlacement_Middle
 	LDA #$60
 	STA PlayerYLo
+IFDEF RANDOMIZER_FLAGS
+	LDA #$00
+	STA PlayerInRocket
+	STA HoldingItem
+	STA PlayerXVelocity
+ENDIF
 	RTS
 
 
@@ -5253,961 +5313,10 @@ unusedSpace $9600, $FF
 ENDIF
 ENDIF
 
-
-TitleScreenPPUDataPointers:
-	.dw PPUBuffer_301
-	.dw TitleLayout
-
-
-WaitForNMI_TitleScreen_TurnOnPPU:
-	LDA #PPUMask_ShowLeft8Pixels_BG | PPUMask_ShowLeft8Pixels_SPR | PPUMask_ShowBackground | PPUMask_ShowSprites
-	STA PPUMaskMirror
-
-WaitForNMI_TitleScreen:
-	LDA ScreenUpdateIndex
-	ASL A
-	TAX
-	LDA TitleScreenPPUDataPointers, X
-	STA RAM_PPUDataBufferPointer
-	LDA TitleScreenPPUDataPointers + 1, X
-	STA RAM_PPUDataBufferPointer + 1
-
-	LDA #$00
-	STA NMIWaitFlag
-WaitForNMI_TitleScreenLoop:
-	LDA NMIWaitFlag
-	BPL WaitForNMI_TitleScreenLoop
-
-	RTS
-
-
-TitleLayout:
-	; red lines, vertical, left
-	.db $20, $00, $DE, $FD
-	.db $20, $01, $DE, $FD
-	.db $20, $02, $DE, $FD
-	.db $20, $03, $DE, $FD
-	; red lines, vertical, right
-	.db $20, $1C, $DE, $FD
-	.db $20, $1D, $DE, $FD
-	.db $20, $1E, $DE, $FD
-	.db $20, $1F, $DE, $FD
-	; red lines, horizontal, top
-	.db $20, $03, $5D, $FD
-	.db $20, $23, $5D, $FD
-	.db $20, $43, $5D, $FD
-	.db $20, $63, $5D, $FD
-	; red lines, vertical, bottom
-	.db $23, $63, $5D, $FD
-	.db $23, $83, $5D, $FD
-	.db $23, $A3, $5D, $FD
-
-	; ornate frame, top
-	.db $20, $68, $10, $48, $4A, $4C, $4E, $50, $51, $52, $53, $54, $55, $56, $57, $58, $5A, $5C, $5E
-	.db $20, $84, $08, $FD, $22, $23, $24, $49, $4B, $4D, $4F
-	.db $20, $94, $08, $59, $5B, $5D, $5F, $2E, $2F, $30, $FD
-	.db $20, $A4, $03, $25, $26, $27
-	.db $20, $B9, $03, $31, $32, $33
-	.db $20, $C4, $03, $28, $29, $2A
-	.db $20, $D9, $03, $34, $35, $36
-	.db $20, $E3, $03, $2B, $2C, $2D
-	.db $20, $FA, $03, $37, $38, $39
-	.db $21, $03, $02, $3A, $3B
-	.db $21, $1B, $02, $40, $41
-	; ornate frame, lines down, top
-	.db $21, $23, $C6, $3C
-	.db $21, $3C, $C6, $42
-	; ornate frame, middle
-	.db $21, $E3, $01, $3D
-	.db $21, $FC, $01, $60
-	.db $22, $02, $02, $3E, $3F
-	.db $22, $1C, $02, $61, $62
-	.db $22, $22, $02, $43, $44
-	.db $22, $3C, $02, $63, $64
-	.db $22, $43, $01, $45
-	.db $22, $5C, $01, $65
-	; ornate frame, lines down, bottom
-	.db $22, $63, $C6, $3C
-	.db $22, $7C, $C4, $42
-	; ornate frame, bottom, characters
-	.db $22, $C4, $02, $A6, $A8
-	.db $22, $E4, $02, $A7, $A9
-	.db $22, $FA, $04, $80, $82, $88, $8A
-	.db $23, $04, $02, $90, $92
-	.db $23, $14, $02, $9E, $A0
-	.db $23, $1A, $04, $81, $83, $89, $8B
-	.db $23, $23, $03, $46, $91, $93
-	.db $23, $2A, $02, $A2, $A4
-	.db $23, $2E, $0B, $67, $6C, $6E, $70, $72, $69, $9F, $A1, $75, $98, $9A
-	.db $23, $3A, $04, $84, $86, $8C, $8E
-	.db $23, $43, $1B, $47, $94, $96, $74, $74, $74, $74, $A3, $A5, $74, $66, $68
-	.db $6D, $6F, $71, $73, $6A, $6B, $74, $74, $99, $9B, $74, $85, $87, $8D, $8F
-	.db $23, $64, $05, $95, $97, $FD, $AA ,$AB
-	.db $23, $77, $04, $9C, $9D, $AA, $AB
-	.db $23, $89, $02, $AA, $AB
-
-	; SUPER
-	;                  SSSSSSSS  UUUUUUUU  PPPPPPPP  EEEEEEEE  RRRRRRRR
-	.db $20, $CB, $0A, $00, $01, $08, $08, $FC, $01, $FC, $08, $FC, $01
-	.db $20, $EB, $0A, $02, $03, $08, $08, $0A, $05, $0B, $0C, $0A, $0D
-	.db $21, $0B, $0A, $04, $05, $04, $05, $0E, $07, $FC, $08, $0E, $08
-	.db $21, $2B, $05, $06, $07, $06, $07, $09
-	.db $21, $31, $04, $76, $09, $09, $09
-
-	; TM
-	;                  TTT  MMM
-	.db $21, $38, $02, $F9, $FA
-
-	; MARIO
-	;                  MMMMMMMMMMMMM  AAAAAAAA  RRRRRRRR  III  OOOOOOOO
-	.db $21, $46, $0A, $00, $0F, $01, $00, $01, $FC, $01, $08, $00, $01
-	.db $21, $66, $0A, $10, $10, $08, $10, $08, $10, $08, $08, $10, $08
-	.db $21, $86, $0A, $08, $08, $08, $08, $08, $13, $0D, $08, $08, $08
-	.db $21, $A6, $0A, $08, $08, $08, $FC, $08, $0E, $08, $08, $08, $08
-	.db $21, $C6, $0A, $08, $08, $08, $10, $08, $08, $08, $08, $04, $05
-	.db $21, $E6, $0A, $09, $09, $09, $09, $09, $09, $09, $09, $06, $07
-
-	; BROS
-	;                  BBBBBBBB  RRRRRRRR  OOOOOOOO  SSSSSSSS
-	.db $21, $51, $08, $FC, $01, $FC, $01, $00, $01, $00, $01 ; BROS
-	.db $21, $71, $08, $10, $08, $10, $08, $10, $08, $10, $08
-	.db $21, $91, $08, $13, $0D, $13, $0D, $08, $08, $77, $03
-	.db $21, $B1, $08, $0E, $08, $0E, $08, $08, $08, $12, $08
-	.db $21, $D1, $09, $13, $05, $08, $08, $04, $05, $04, $05, $08
-	.db $21, $F1, $09, $11, $07, $09, $09, $06, $07, $06, $07, $09
-
-IFDEF PLAYER_STUFF_TITLE
-      .BYTE $22,$6,4,$14,$15,$16,$17		  
-      .BYTE $22,$26,4,$18,$19,$1A,$1B		  
-      .BYTE $22,$46,4,$1C,$1D,$1E,$1F		  
-      .BYTE $22,$66,4,$FC,$FC,$FC,$20		  
-      .BYTE $22,$86,4,$76,$76,$76,$21		  
-FunkyLittleSeedBlock:
-      .BYTE $22, $B, $0F, 'OPEN' + $99, $FB, $EB, $DA, $E7, $DD, $E8, $E6, $E2, $F3, $DE, $EB;
-FunkyLittleSeedBlock2:
-      .BYTE $22, $2B, $0F, $e7, $e8, $fb, $e8, $db, $e3, $de, $dc, $ed, $e2, $ef, $de, $fb, $fb, $fb;  
-FunkyLittleSeedBlock3:
-      .BYTE $22, $4B, $0F, $CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF
-FunkyLittleSeedBlock4:
-      .BYTE $22, $6B, $0F, $CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF
-FunkyLittleSeedBlock5:
-      .BYTE $22, $8B, $0F, $CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF
-FunkyLittleSeedBlock6:
-      .BYTE $22, $a7, $13, $CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF
-FunkyLittleSeedBlock7:
-      .BYTE $22, $c7, $13, $CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF,$CF
-ENDIF
-
-IFNDEF PLAYER_STUFF_TITLE
-	; 2
-	;             22222222222222222222222
-	.db $22, $0E, $04, $14, $15, $16, $17
-	.db $22, $2E, $04, $18, $19, $1A, $1B
-	.db $22, $4E, $04, $1C, $1D, $1E, $1F
-	.db $22, $6E, $04, $FC, $FC, $FC, $20
-	.db $22, $8E, $04, $76, $76, $76, $21
-ENDIF
-
-
-IFNDEF PLAYER_STUFF_TITLE
-	; (C) 1988
-	;                  (C)  111  999  888  888
-	.db $22, $E9, $05, $F8, $D1, $D9, $D8, $D8 ; (C) 1988
-
-	; NINTENDO
-	;                  NNN  III  NNN  TTT  EEE  NNN  DDD  OOO
-	.db $22, $EF, $08, $E7, $E2, $E7, $ED, $DE, $E7, $DD, $E8
-ENDIF
-IFDEF PLAYER_STUFF_TITLE
-	; (C) 1988
-	;                  (C)  111  999  888  888
-	.db $22, $E7, $05, $F8, $D1, $D9, $D8, $D8  ; (C) 1988
-
-	.db $22, $EC, $05, $F4, $D2, $D0, $D1, $D9  ; (C) 1988
-
-	; NINTENDO
-	;                  NNN  III  NNN  TTT  EEE  NNN  DDD  OOO
-	.db $22, $F2, $08, $E7, $E2, $E7, $ED, $DE, $E7, $DD, $E8
-ENDIF
-
-IFNDEF PLAYER_STUFF_TITLE
-	.db $23, $CA, $04, $80, $A0, $A0, $20
-	.db $23, $D1, $0E, $80, $A8, $AA, $AA, $A2, $22, $00, $00, $88, $AA, $AA, $AA, $AA, $22
-	.db $23, $E3, $02, $88, $22
-	.db $23, $EA, $04, $F0, $F8, $F2, $F0
-ENDIF
-	.db $00
-
-IFDEF PAD_TITLE_SCREEN_PPU_DATA
-	.pad TitleLayout + $300, $00
-ENDIF
-
-TitleBackgroundPalettes:
-IFDEF PLAYER_STUFF_TITLE 
-    .db $22,$32,$93,$7
-ENDIF
-IFNDEF PLAYER_STUFF_TITLE
-	.db $22, $37, $16, $07 ; Most of screen, outline, etc.
-ENDIF
-	.db $22, $30, $31, $0F ; Unused
-	.db $22, $30, $0F, $0F ; Logo
-	.db $22, $30, $0F, $0F ; Copyright, Story
-
-TitleSpritePalettes:
-	.db $22, $30, $28, $0F ; Unused DDP character palettes
-	.db $22, $30, $25, $0F ; There are no sprites on the title screen,
-	.db $22, $30, $12, $0F ; so these are totally unused
-	.db $22, $30, $23, $0F
-
-TitleStoryText_STORY:
-	.db $EC, $ED, $E8, $EB, $F2 ; STORY
-
-IFNDEF PLAYER_STUFF_TITLE
-TitleStoryTextPointersHi:
-	.db >TitleStoryText_Line01
-	.db >TitleStoryText_Line02
-	.db >TitleStoryText_Line03
-	.db >TitleStoryText_Line04
-	.db >TitleStoryText_Line05
-	.db >TitleStoryText_Line06
-	.db >TitleStoryText_Line07
-	.db >TitleStoryText_Line08
-	.db >TitleStoryText_Line08 ; For some reason line 8 is referenced twice here, but not used
-	.db >TitleStoryText_Line09
-	.db >TitleStoryText_Line10
-	.db >TitleStoryText_Line11
-	.db >TitleStoryText_Line12
-	.db >TitleStoryText_Line13
-	.db >TitleStoryText_Line14
-	.db >TitleStoryText_Line15
-	.db >TitleStoryText_Line16
-
-TitleStoryTextPointersLo:
-	.db <TitleStoryText_Line01
-	.db <TitleStoryText_Line02
-	.db <TitleStoryText_Line03
-	.db <TitleStoryText_Line04
-	.db <TitleStoryText_Line05
-	.db <TitleStoryText_Line06
-	.db <TitleStoryText_Line07
-	.db <TitleStoryText_Line08
-	.db <TitleStoryText_Line08 ; For some reason line 8 is referenced twice here, but not used
-	.db <TitleStoryText_Line09
-	.db <TitleStoryText_Line10
-	.db <TitleStoryText_Line11
-	.db <TitleStoryText_Line12
-	.db <TitleStoryText_Line13
-	.db <TitleStoryText_Line14
-	.db <TitleStoryText_Line15
-	.db <TitleStoryText_Line16
-ENDIF
-
-IFDEF PLAYER_STUFF_TITLE
-TitleStoryTextPointersHi:
-	.db >TitleStoryText_Line01
-	.db >TitleStoryText_Line02
-	.db >TitleStoryText_Line03
-	.db >TitleStoryText_Line04
-	.db >TitleStoryText_Line05
-	.db >TitleStoryText_Line06
-	.db >TitleStoryText_Line07
-	.db >TitleStoryText_Line08
-	.db >TitleStoryText_Line09
-	.db >TitleStoryText_Line10
-	.db >TitleStoryText_Line11
-	.db >TitleStoryText_Line12
-	.db >TitleStoryText_Line13
-	.db >TitleStoryText_Line14
-	.db >TitleStoryText_Line15
-	.db >TitleStoryText_Line16
-	.db >TitleStoryText_LineBlank
-	.db >TitleStoryText_LineCredit1
-	.db >TitleStoryText_LineCredit2
-	.db >TitleStoryText_LineCredit3
-	.db >TitleStoryText_LineCredit4
-	.db >TitleStoryText_LineCredit5
-	.db >TitleStoryText_LineCredit6
-	.db >TitleStoryText_LineCredit7
-	.db >TitleStoryText_LineCredit8
-	.db >TitleStoryText_LineCredit9
-	.db >TitleStoryText_LineCreditA
-	.db >TitleStoryText_LineCreditB
-	.db >TitleStoryText_LineCreditC
-	.db >TitleStoryText_LineCreditD
-	.db >TitleStoryText_LineCreditE
-	.db >TitleStoryText_LineCreditF
-	.db >TitleStoryText_LineBlank
-	.db >TitleStoryText_LineStart
-
-TitleStoryTextPointersLo:
-	.db <TitleStoryText_Line01
-	.db <TitleStoryText_Line02
-	.db <TitleStoryText_Line03
-	.db <TitleStoryText_Line04
-	.db <TitleStoryText_Line05
-	.db <TitleStoryText_Line06
-	.db <TitleStoryText_Line07
-	.db <TitleStoryText_Line08
-	.db <TitleStoryText_Line09
-	.db <TitleStoryText_Line10
-	.db <TitleStoryText_Line11
-	.db <TitleStoryText_Line12
-	.db <TitleStoryText_Line13
-	.db <TitleStoryText_Line14
-	.db <TitleStoryText_Line15
-	.db <TitleStoryText_Line16
-	.db <TitleStoryText_LineBlank
-	.db <TitleStoryText_LineCredit1
-	.db <TitleStoryText_LineCredit2
-	.db <TitleStoryText_LineCredit3
-	.db <TitleStoryText_LineCredit4
-	.db <TitleStoryText_LineCredit5
-	.db <TitleStoryText_LineCredit6
-	.db <TitleStoryText_LineCredit7
-	.db <TitleStoryText_LineCredit8
-	.db <TitleStoryText_LineCredit9
-	.db <TitleStoryText_LineCreditA
-	.db <TitleStoryText_LineCreditB
-	.db <TitleStoryText_LineCreditC
-	.db <TitleStoryText_LineCreditD
-	.db <TitleStoryText_LineCreditE
-	.db <TitleStoryText_LineCreditF
-	.db <TitleStoryText_LineBlank
-	.db >TitleStoryText_LineStart
-ENDIF
-
-TitleStoryText_Line01:
-	.db $F0, $E1, $DE, $E7, $FB, $FB, $E6, $DA, $EB, $E2, $E8, $FB, $E8, $E9, $DE, $E7
-	.db $DE, $DD, $FB, $DA ; WHEN MARIO OPENED A
-
-TitleStoryText_Line02:
-	.db $DD, $E8, $E8, $EB, $FB, $DA, $DF, $ED, $DE, $EB, $FB, $FB, $DC, $E5, $E2, $E6
-	.db $DB, $E2, $E7, $E0 ; DOOR AFTER CLIMBING
-
-TitleStoryText_Line03:
-	.db $DA, $FB, $E5, $E8, $E7, $E0, $FB, $EC, $ED, $DA, $E2, $EB, $FB, $E2, $E7, $FB
-	.db $FB, $E1, $E2, $EC ; A LONG STAIR IN HIS
-
-TitleStoryText_Line04:
-	.db $DD, $EB, $DE, $DA, $E6, $F7, $FB, $DA, $E7, $E8, $ED, $E1, $DE, $EB, $FB, $F0
-	.db $E8, $EB, $E5, $DD ; DREAM, ANOTHER WORLD
-
-TitleStoryText_Line05:
-	.db $EC, $E9, $EB, $DE, $DA, $DD, $FB, $FB, $FB, $DB, $DE, $DF, $E8, $EB, $DE, $FB
-	.db $FB, $E1, $E2, $E6 ; SPREAD BEFORE HIM
-
-TitleStoryText_Line06:
-	.db $DA, $E7, $DD, $FB, $E1, $DE, $FB, $E1, $DE, $DA, $EB, $DD, $FB, $DA, $FB, $EF
-	.db $E8, $E2, $DC, $DE ; AND HE HEARD A VOICE
-
-TitleStoryText_Line07:
-	.db $DC, $DA, $E5, $E5, $FB, $DF, $E8, $EB, $FB, $E1, $DE, $E5, $E9, $FB, $ED, $E8
-	.db $FB, $FB, $DB, $DE ; CALL FOR HELP TO BE
-
-TitleStoryText_Line08:
-	.db $FB, $DF, $EB, $DE, $DE, $DD, $FB, $FB, $DF, $EB, $E8, $E6, $FB, $DA, $FB, $EC
-	.db $E9, $DE, $E5, $E5 ; FREED FROM A SPELL
-
-TitleStoryText_Line09:
-	.db $DA, $DF, $ED, $DE, $EB, $FB, $FB, $DA, $F0, $DA, $E4, $DE, $E7, $E2, $E7, $E0
-	.db $F7, $FB, $FB, $FB ; AFTER AWAKENING,
-
-TitleStoryText_Line10:
-	.db $E6, $DA, $EB, $E2, $E8, $FB, $FB, $F0, $DE, $E7, $ED, $FB, $ED, $E8, $FB, $FB
-	.db $DA, $FB, $FB, $FB ; MARIO WENT TO A
-
-TitleStoryText_Line11:
-	.db $DC, $DA, $EF, $DE, $FB, $FB, $E7, $DE, $DA, $EB, $DB, $F2, $FB, $DA, $E7, $DD
-	.db $FB, $FB, $ED, $E8 ; CAVE NEARBY AND TO
-
-TitleStoryText_Line12:
-	.db $E1, $E2, $EC, $FB, $FB, $EC, $EE, $EB, $E9, $EB, $E2, $EC, $DE, $FB, $E1, $DE
-	.db $FB, $EC, $DA, $F0 ; HIS SURPRISE HE SAW
-
-TitleStoryText_Line13:
-	.db $DE, $F1, $DA, $DC, $ED, $E5, $F2, $FB, $FB, $F0, $E1, $DA, $ED, $FB, $E1, $DE
-	.db $FB, $EC, $DA, $F0 ; EXACTLY WHAT HE SAW
-
-TitleStoryText_Line14:
-	.db $E2, $E7, $FB, $E1, $E2, $EC, $FB, $DD, $EB, $DE, $DA, $E6, $CF, $CF, $CF, $CF
-	.db $FB, $FB, $FB, $FB ; IN HIS DREAM....
-
-TitleStoryText_Line15:
-	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
-	.db $FB, $FB, $FB, $FB ; (blank)
-
-TitleStoryText_LineStart:
-TitleStoryText_Line16:
-	.db $FB, $FB, $E9, $EE, $EC, $E1, $FB, $EC, $ED, $DA, $EB, $ED, $FB, $DB, $EE, $ED
-	.db $ED, $E8, $E7, $FB ; PUSH START BUTTON
-
-IFDEF PLAYER_STUFF_TITLE
-TitleStoryText_LineExtra:
-	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
-	.db $FB, $FB, $FB, $FB ; (blank)
-
-TitleStoryText_LineBlank:
-	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
-	.db $FB, $FB, $FB, $FB ; (blank)
-
-TitleStoryText_LineCredit1:
-    ;.db $E9, $EB, $E8, $E0, $EB, $DA, $E6, $E6, $DE, $DD, $FB, $DB, $F2, $FB, $FB;
-	.db "PROGRAMMED" + $99, $FB, "BY" + $99, $FB, $FB
-	.db $FB, $FB, $FB ; 
-	.db $ac, $ae; sheepright
-
-TitleStoryText_LineCredit2:
-;    .db $E9, $DE, $E9, $E9, $DE, $EB, $E9, $E8, $F0, $DE, $EB;
-	.db "PEPPERPOW" + $99, $FB, $FB
-	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB ; pepperpower
-	.db $ad, $af; (blank)
-
-TitleStoryText_LineCredit3:
-	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
-	.db $FB, $FB, $FB, $FB ; (blank)
-
-TitleStoryText_LineCredit4:
-	.db $b4, $b6; devilright
-	.db $FB ; (blank)
-	.db "ASM" + $99, $FB, "DOCUMENTATION" + $99
-;    .db $DA, $EC, $E6, $FB, $DD, $E8, $DC, $EE, $E6, $DE, $E7, $ED, $DA, $ED, $E2, $E8, $E7
-
-TitleStoryText_LineCredit5:
-	.db $b5, $b7, $c9 ; (blank)
-	.db $FB, $FB, $FB ; (blank)
-	.db $FB;
-    .db $F1, $E4, $DE, $DE, $E9, $DE, $EB, $F7, $FB, $E4, $E6, $DC, $E4, $FB, $FB
-	.db "XKEEPER," + $99, $FB, "KMCK" + $99
-
-TitleStoryText_LineCredit6:
-	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
-	.db $FB, $FB, $FB, $FB ; (blank)
-
-TitleStoryText_LineCredit7:
-    .db $DC, $EE, $EC, $ED, $E8, $E6, $FB, $E0, $EB, $DA, $E9, $E1, $E2, $DC, $EC
-	.db $FB, $FB, $FB ; (blank)
-	.db $b0, $b2; (blank)
-
-TitleStoryText_LineCredit8:
-    .db $E9, $DA, $E4, $E8, $F7, $FB, $E9, $DE, $E9, $E9, $DE, $EB, $E9, $E8, $F0, $DE, $EB
-	.db $FB, $b1, $b3; (blank)
-
-TitleStoryText_LineCredit9:
-	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
-	.db $FB, $FB, $FB, $FB ; (blank)
-
-TitleStoryText_LineCreditA:
-	.db $BC, $BE, $FB, $FB, $FB, $FB, $FB, $FB, $FB
-    .db $E9, $EB, $E8, $E0, $FB, $DA, $EC, $EC, $E2, $EC, $ED, $FB, $FB, $FB, $FB
-	.db $FB, $FB, $FB, $FB ; (blank)
-	.db $CF, $CF, $CF, $CF ; (blank)
-
-TitleStoryText_LineCreditB:
-	.db $BD, $BF, $FB, $FB, $FB, $FB, $FB
-    .db $E4, $E6, $DC, $E4, $F7, $FB, $F1, $E4, $DE, $DE, $E9, $DE, $EB, $FB, $FB
-	.db $FB, $FB, $FB, $FB ; (blank)
-	.db $CF, $CF, $CF, $CF ; (blank)
-
-TitleStoryText_LineCreditC:
-	.db $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB, $FB
-	.db $FB, $FB, $FB, $FB ; (blank)
-	.db $CF, $CF, $CF, $CF ; (blank)
-
-TitleStoryText_LineCreditD:
-    .db $EC, $E9, $DE, $DC, $E2, $DA, $E5, $FB, $ED, $E1, $DA, $E7, $E4, $EC, $FB
-	.db $FB, $FB, $FB, $FB ; (blank)
-	.db $FB; (blank)
-
-TitleStoryText_LineCreditE:
-    .db $FB, $ED, $DE, $ED, $EB, $DA, $E5, $F2, $F7, $FB, $E5, $E8, $E0, $E2, $E7, $EC, $E2, $E7, $DE, $F1
-	.db $FB, $FB, $FB, $FB ; (blank)
-	.db $CF, $CF, $CF, $CF ; (blank)
-
-TitleStoryText_LineCreditF:
-    .db $FB, $FB, $FB, $FB, $DA, $E7, $DD, $FB, $F2, $E8, $EE, $CE, $FB, $cb, $cd, $FB
-	.db $FB, $FB, $FB ; (blank)
-	.db $FB; (blank)
-
-
-    
-
-ENDIF
-
-TitleAttributeData1:
-	.db $23, $CB, $42, $FF
-	.db $23, $D1, $01, $CC
-	.db $23, $D2, $44, $FF
-	.db $23, $D6, $01, $33
-	.db $23, $D9, $01, $CC
-	.db $23, $DA, $44, $FF
-
-TitleAttributeData2:
-	.db $23, $DE, $01, $33
-	.db $23, $E1, $01, $CC
-	.db $23, $E2, $44, $FF
-	.db $23, $E6, $01, $33
-	.db $23, $EA, $44, $FF
-	.db $23, $E9, $01, $CC
-	.db $23, $EE, $01, $33
-
-
-; =============== S U B R O U T I N E =======================================
-
-TitleScreen:
-	LDY #$07 ; Does initialization of RAM.
-	STY byte_RAM_1 ; This clears $200 to $7FF.
-	LDY #$00
-	STY byte_RAM_0
-	TYA
-
-InitMemoryLoop:
-	STA (byte_RAM_0), Y ; I'm not sure if a different method of initializing memory
-; would work better in this case.
-	DEY
-	BNE InitMemoryLoop
-
-	DEC byte_RAM_1
-	LDX byte_RAM_1
-	CPX #$02
-	BCS InitMemoryLoop ; Stop initialization after we hit $200.
-
-IFDEF PLAYER_STUFF_TITLE
-	LDY #$78 ; Does initialization of RAM.
-	STY byte_RAM_1 ; This clears $200 to $7FF.
-	LDY #$00
-	STY byte_RAM_0
-	TYA
-
-InitMemoryLoop_Custom:
-	STA (byte_RAM_0), Y ; I'm not sure if a different method of initializing memory
-; would work better in this case.
-	DEY
-	BNE InitMemoryLoop_Custom
-
-	DEC byte_RAM_1
-	LDX byte_RAM_1
-	CPX #$72
-	BCS InitMemoryLoop_Custom; Stop initialization after we hit $200.
-ENDIF
-
-loc_BANK0_9A53:
-	LDA #$00
-	TAY
-
-InitMemoryLoop2:
-	; Clear $0000-$00FF.
-	; Notably, this leaves the stack area $0100-$01FF uninitialized.
-	; This is not super important, but you might want to do it yourself to
-	; track stack corruption or whatever.
-	STA byte_RAM_0, Y
-	INY
-	BNE InitMemoryLoop2
-
-	JSR LoadTitleScreenCHRBanks
-
-	JSR ClearNametablesAndSprites
-
-	LDA PPUSTATUS
-	LDA #$3F
-	LDY #$00
-	STA PPUADDR
-	STY PPUADDR
-
-InitTitleBackgroundPalettesLoop:
-	LDA TitleBackgroundPalettes, Y
-	STA PPUDATA
-	INY
-	CPY #$20
-	BCC InitTitleBackgroundPalettesLoop
-
-	LDA #$01
-	STA RAM_PPUDataBufferPointer
-	LDA #$03
-	STA RAM_PPUDataBufferPointer + 1
-	LDA #Stack100_Menu
-	STA StackArea
-	LDA #PPUCtrl_Base2000 | PPUCtrl_WriteHorizontal | PPUCtrl_Sprite0000 | PPUCtrl_Background1000 | PPUCtrl_SpriteSize8x8 | PPUCtrl_NMIEnabled
-	STA PPUCtrlMirror
-	STA PPUCTRL
-	JSR WaitForNMI_TitleScreen
-
-	LDA #$01 ; @TODO
-	STA ScreenUpdateIndex
-	JSR WaitForNMI_TitleScreen
-
-	LDA #Music1_Title
-	STA MusicQueue1
-	JSR WaitForNMI_TitleScreen_TurnOnPPU
-
-	LDA #$03
-	STA byte_RAM_10
-	LDA #$25
-IFDEF PLAYER_STUFF_TITLE
-    LDA #$16
-ENDIF
-	STA byte_RAM_2
-	LDA #$20
-	STA PlayerXHi
-	LDA #$C7
-	STA ObjectXHi
-	LDA #$52
-	STA ObjectXHi + 1
-
-loc_BANK0_9AB4:
-	JSR WaitForNMI_TitleScreen
-
-	LDA ObjectXHi + 2
-	BNE loc_BANK0_9AF3
-
-loc_BANK0_9ABB:
-	INC byte_RAM_10
-	LDA byte_RAM_10
-	AND #$0F
-	BEQ loc_BANK0_9AC6
-
-	JMP loc_BANK0_9B4D
-
-; ---------------------------------------------------------------------------
-
-loc_BANK0_9AC6:
-	DEC byte_RAM_2
-	LDA byte_RAM_2
-	CMP #$06
-	BNE loc_BANK0_9B4D
-
-	INC ObjectXHi + 2
-	LDA PlayerXHi
-	STA PPUBuffer_301
-	LDA ObjectXHi
-	STA PPUBuffer_301 + 1
-	LDA ObjectXHi + 1
-	STA PPUBuffer_301 + 2
-	LDA #$E6
-	STA ObjectXHi
-	LDA #$54
-	STA ObjectXHi + 1
-	LDA #$0FB
-	STA PPUBuffer_301 + 3
-	LDA #$00
-	STA PPUBuffer_301 + 4
-	BEQ loc_BANK0_9B4D
-
-loc_BANK0_9AF3:
-	LDA PlayerXHi
-	STA PPUBuffer_301
-	LDA ObjectXHi
-	STA PPUBuffer_301 + 1
-	LDA ObjectXHi + 1
-	STA PPUBuffer_301 + 2
-	LDA #$0FB
-	STA PPUBuffer_301 + 3
-	LDA #$00
-	STA PPUBuffer_301 + 4
-	LDA ObjectXHi
-	CLC
-	ADC #$20
-	STA ObjectXHi
-	LDA PlayerXHi
-	ADC #$00
-	STA PlayerXHi
-	CMP #$23
-
-loc_BANK0_9B1B:
-	BCC loc_BANK0_9B4D
-
-	LDA #$20
-	STA byte_RAM_10
-	LDX #$17
-	LDY #$00
-
-loc_BANK0_9B25:
-	LDA TitleAttributeData1, Y
-	STA PPUBuffer_301 + 4, Y
-	INY
-	DEX
-	BPL loc_BANK0_9B25
-
-	LDA #$00
-	STA PPUBuffer_301 + 4, Y
-	JSR WaitForNMI_TitleScreen
-
-	LDX #$1B
-	LDY #$00
-
-loc_BANK0_9B3B:
-	LDA TitleAttributeData2, Y
-	STA PPUBuffer_301, Y
-	INY
-	DEX
-	BPL loc_BANK0_9B3B
-
-	LDA #$00
-	STA PPUBuffer_301, Y
-	JMP loc_BANK0_9B59
-
-; ---------------------------------------------------------------------------
-
-loc_BANK0_9B4D:
-	LDA Player1JoypadPress
-	AND #ControllerInput_Start
-	BEQ loc_BANK0_9B56
-
-	JMP loc_BANK0_9C1F
-
-; ---------------------------------------------------------------------------
-
-loc_BANK0_9B56:
-	JMP loc_BANK0_9AB4
-
-; ---------------------------------------------------------------------------
-
-loc_BANK0_9B59:
-	JSR WaitForNMI_TitleScreen
-
-	LDA ObjectXHi + 4
-	BEQ loc_BANK0_9B63
-
-	JMP loc_BANK0_9C19
-
-; ---------------------------------------------------------------------------
-
-loc_BANK0_9B63:
-	LDA ObjectXHi + 3
-	CMP #$09
-IFDEF PLAYER_STUFF_TITLE
-	CMP #$11
-    BEQ TitleScreen_WriteCreditsText
-ENDIF
-	BEQ loc_BANK0_9B93
-
-	LDA ObjectXHi + 3
-	BNE loc_BANK0_9BA3
-
-	DEC byte_RAM_10
-	BMI TitleScreen_WriteSTORYText
-
-	JMP loc_BANK0_9C19
-
-; ---------------------------------------------------------------------------
-
-IFDEF PLAYER_STUFF_TITLE
-TitleStoryText_CREDITS:
-	.db $DC, $EB, $DE, $DD, $E2, $ED, $EC ; CREDITS
-
-TitleScreen_WriteCreditsText:
-    ; PPUBuffer_301
-    ; ObjectXHi    ;; vis row
-    ; PlayerXHi    ;; vis col
-    ; ObjectXHi + 3 ;; cnt lines
-    ; ObjectXHi + 5 ;; vis row timer
-	LDA #$20
-	STA PPUBuffer_301
-	LDA #$0AD
-	STA PPUBuffer_301 + 1
-	LDA #$07 ; Length of STORY text (5 bytes)
-	STA PPUBuffer_301 + 2
-	LDY #$06 ; Bytes to copy minus one (5-1=4)
-
-TitleScreen_WriteCreditsTextLoop:
-	LDA TitleStoryText_CREDITS, Y ; Copy STORY text to PPU write buffer
-	STA PPUBuffer_301 + 3, Y
-	DEY
-	BPL TitleScreen_WriteCreditsTextLoop
-
-	LDA #$00 ; Terminate STORY text in buffer
-	STA PPUBuffer_301 + 10
-    JMP loc_BANK0_9B93
-ENDIF
-
-TitleScreen_WriteSTORYText:
-    ; PPUBuffer_301
-    ; ObjectXHi    ;; vis row
-    ; PlayerXHi    ;; vis col
-    ; ObjectXHi + 3 ;; cnt lines
-    ; ObjectXHi + 5 ;; vis row timer
-	LDA #$20
-	STA PPUBuffer_301
-	LDA #$0AE
-	STA PPUBuffer_301 + 1
-	LDA #$05 ; Length of STORY text (5 bytes)
-	STA PPUBuffer_301 + 2
-	LDY #$04 ; Bytes to copy minus one (5-1=4)
-
-TitleScreen_WriteSTORYTextLoop:
-	LDA TitleStoryText_STORY, Y ; Copy STORY text to PPU write buffer
-	STA PPUBuffer_301 + 3, Y
-	DEY
-	BPL TitleScreen_WriteSTORYTextLoop
-
-	LDA #$00 ; Terminate STORY text in buffer
-	STA PPUBuffer_301 + 8
-
-loc_BANK0_9B93: ;; reset to top?
-	INC ObjectXHi + 3
-	LDA #$21
-	STA PlayerXHi
-	LDA #$06
-	STA ObjectXHi
-	LDA #$40
-	STA ObjectXHi + 5
-	BNE loc_BANK0_9C19
-
-loc_BANK0_9BA3:
-	DEC ObjectXHi + 5
-	BPL loc_BANK0_9C19
-
-loc_BANK0_9BA7:
-IFNDEF PLAYER_STUFF_TITLE
-	LDA #$40
-ENDIF
-IFDEF PLAYER_STUFF_TITLE
-    LDA #$28 ;; line speed
-ENDIF
-	STA ObjectXHi + 5
-	LDA PlayerXHi
-	STA PPUBuffer_301
-
-loc_BANK0_9BB0:
-	LDA ObjectXHi ;; row
-
-loc_BANK0_9BB2:
-	STA PPUBuffer_301 + 1
-	LDA #$14                ; column
-	STA PPUBuffer_301 + 2
-	LDX ObjectXHi + 3
-	DEX
-	LDA TitleStoryTextPointersHi, X
-	STA byte_RAM_4
-	LDA TitleStoryTextPointersLo, X
-	STA byte_RAM_3
-	LDY #$00 ; array pos
-	LDX #$13 ; length string
-
-loc_BANK0_9BCB:
-	LDA (byte_RAM_3), Y
-	STA PPUBuffer_301 + 3, Y
-	INY
-	DEX
-	BPL loc_BANK0_9BCB ;; loop end
-
-	LDA #$00
-	STA PPUBuffer_301 + 3, Y
-	INC ObjectXHi + 3
-	LDA ObjectXHi
-	CLC
-IFDEF PLAYER_STUFF_TITLE
-	ADC #$20 ;; row shift
-ENDIF
-IFNDEF PLAYER_STUFF_TITLE
-	ADC #$40 ;; row shift
-ENDIF
-	STA ObjectXHi
-	LDA PlayerXHi ;; carry adds after objectxhi
-	ADC #$00
-	STA PlayerXHi
-	LDA ObjectXHi + 3 ;; how many lines?  after 9, clear
-	CMP #$09
-IFDEF PLAYER_STUFF_TITLE
-	CMP #$11
-ENDIF
-	BCC loc_BANK0_9C19 ;; if under 9, skip
-
-	BNE loc_BANK0_9C0B ;; if exactly 9, proceed down
-
-	LDA #$09 ;; starting delay
-	STA byte_RAM_2
-	LDA #$03
-IFDEF PLAYER_STUFF_TITLE
-	LDA #$06
-ENDIF
-	STA byte_RAM_10
-	LDA #$20
-	STA PlayerXHi
-	LDA #$C7
-	STA ObjectXHi
-	LDA #$52
-	STA ObjectXHi + 1
-	LDA #$00
-	STA ObjectXHi + 2
-
-	JMP loc_BANK0_9ABB
-
-; ---------------------------------------------------------------------------
-loc_BANK0_9C0B:
-	CMP #$12
-IFDEF PLAYER_STUFF_TITLE
-	CMP #$22
-ENDIF
-	BCC loc_BANK0_9C19
-
-	INC ObjectXHi + 4
-	LDA #$25
-	STA byte_RAM_2
-	LDA #$03
-IFDEF PLAYER_STUFF_TITLE
-	LDA #$06
-ENDIF
-	STA byte_RAM_10
-
-loc_BANK0_9C19:
-	LDA Player1JoypadHeld
-	AND #ControllerInput_Start
-	BEQ loc_BANK0_9C35
-
-loc_BANK0_9C1F:
-	LDA #Music2_StopMusic
-	STA MusicQueue2
-	JSR WaitForNMI_TitleScreen
-
-	LDA #$00
-	TAY
-
-loc_BANK0_9C2A:
-	STA byte_RAM_0, Y
-	INY
-	CPY #$F0
-	BCC loc_BANK0_9C2A
-
-	JMP HideAllSprites
-
-; ---------------------------------------------------------------------------
-
-loc_BANK0_9C35:
-	LDA ObjectXHi + 4
-	BEQ loc_BANK0_9C4B
-
-	INC byte_RAM_10
-	LDA byte_RAM_10
-	AND #$0F
-	BNE loc_BANK0_9C4B
-
-	DEC byte_RAM_2
-	LDA byte_RAM_2
-	CMP #$06
-	BNE loc_BANK0_9C4B
-
-	BEQ loc_BANK0_9C4E
-
-loc_BANK0_9C4B:
-	JMP loc_BANK0_9B59
-
-; ---------------------------------------------------------------------------
-
-loc_BANK0_9C4E:
-	LDA #PPUCtrl_Base2000 | PPUCtrl_WriteHorizontal | PPUCtrl_Sprite0000 | PPUCtrl_Background1000 | PPUCtrl_SpriteSize8x8 | PPUCtrl_NMIDisabled
-	STA PPUCtrlMirror
-
-loc_BANK0_9C52:
-	STA PPUCTRL
-	JMP loc_BANK0_9A53
-
-; End of function TitleScreen
-
-
+.include "./src/title_screen/main.asm"
 
 ; Unused space in the original ($9C58 - $A1FF)
 unusedSpace $A200, $FF
-
 
 EndingPPUDataPointers:
 	.dw PPUBuffer_301
@@ -6961,7 +6070,7 @@ EndingScreenUpdateIndex:
 ContributorSpriteZeroOAMData:
 	.db $8C, $FC, $20, $94
 
-IFDEF TEST_FLAG
+IFDEF CUSTOM_PLAYER_RENDER
 ContributorCharacterOAMData:
 	; Mario
 	.db $4F, $00, $20, $50
@@ -7065,7 +6174,7 @@ IFNDEF TEST_FLAG
 	DEY
 	BPL ContributorScene_CharacterLoop
 ENDIF
-IFDEF TEST_FLAG
+IFDEF CUSTOM_PLAYER_RENDER
     LDA #$31
     STA SpriteCHR1
 -   TYA
@@ -7219,6 +6328,7 @@ loc_BANK1_AB4E:
 	INC byte_RAM_7
 
 loc_BANK1_AB80:
+IFNDEF EXCLUDE_MARIO_DREAM
 	LDA byte_RAM_7
 	CMP #$29
 	BCC loc_BANK1_AB32
@@ -7228,6 +6338,9 @@ loc_BANK1_AB80:
 	LDA byte_RAM_E6
 	CMP #$04
 	BCC loc_BANK1_AB32
+ELSE
+	JMP loc_BANK1_AB32
+ENDIF
 
 	RTS
 
@@ -8390,15 +7503,14 @@ CreateEnemy_Bank1_FoundSlot:
 	LDX byte_RAM_12
 	RTS
 
-.include "src/extras/controller-2-debug.asm"
+.include "src/extras/debug/controller-2-debug.asm"
 
 IFDEF MIGRATE_QUADS
-
-.include "src/systems/tile-quads.asm"
-
+.include "src/systems/tile_quads.asm"
 ENDIF
 
 IFDEF CUSTOM_MUSH
 .include "src/extras/player-mods.asm"
 .include "src/extras/draw-inventory.asm"
 ENDIF
+

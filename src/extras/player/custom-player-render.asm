@@ -74,8 +74,8 @@ CharacterTwo_Frames:
 	.db $2E ; $15
 	.db $0C ; $02
 	.db $0E ; $03
-	.db $B4 ; $02
-	.db $B6 ; $03
+	.db $3c ; $02
+	.db $3e ; $03
 	.db $30 ; $1a
 	.db $30 ; $1b
 	.db $32 ; $1c
@@ -172,8 +172,8 @@ CharacterFour_Frames:
 	.db $2E ; $15
 	.db $0C ; $16
 	.db $0E ; $17
-	.db $10 ; $18
-	.db $12 ; $19
+	.db $3c ; $18
+	.db $3e ; $19
 	.db $30 ; $1a
 	.db $30 ; $1b
 	.db $32 ; $1c
@@ -271,8 +271,8 @@ CharacterTwo_FramesSmall:
 	.db $2E ; $15
 	.db $0C ; $02
 	.db $0E ; $03
-	.db $B4 ; $02
-	.db $B6 ; $03
+	.db $3c ; $02
+	.db $3e ; $03
 	.db $30 ; $1a
 	.db $30 ; $1b
 	.db $32 ; $1c

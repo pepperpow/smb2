@@ -537,26 +537,46 @@ byte_BANKA_84E5:
 	.db $FF ; Cycled in code ($726B)
 
 PlayerSelectPalettes:
-	.db $3F, $00, $20
-	.db $0F, $28, $16, $06
-	.db $0F, $30, $12, $16
-	.db $0F, $30, $16, $12
-	.db $0F, $30, $12, $16
-	.db $0F, $22, $12, $01
-	.db $0F, $22, $12, $01
-	.db $0F, $22, $12, $01
-	.db $0F, $22, $12, $01
+IFNDEF CUSTOM_TITLE
+	.db $30 + pal_blkC, $00, $20
+	.db pal_blkC, $20 + pal_yell, $10 + pal_redB, pal_redB
+	.db pal_blkC, $30 + pal_grey, $10 + pal_bluB, $10 + pal_redB
+	.db pal_blkC, $30 + pal_grey, $10 + pal_redB, $10 + pal_bluB
+	.db pal_blkC, $30 + pal_grey, $10 + pal_bluB, $10 + pal_redB
+	.db pal_blkC, $20 + pal_bluB, $10 + pal_bluB, pal_bluA 
+	.db pal_blkC, $20 + pal_bluB, $10 + pal_bluB, pal_bluA 
+	.db pal_blkC, $20 + pal_bluB, $10 + pal_bluB, pal_bluA 
+	.db pal_blkC, $20 + pal_bluB, $10 + pal_bluB, pal_bluA 
 	.db $00
+ELSE
+	.db $30 + pal_blkC, $00, $20
+	.db pal_blkC, $20 + pal_bluB, $10 + pal_purp, pal_purp
+	.db pal_blkC, $10 + pal_grey, $10 + pal_bluB, $10 + pal_redB
+	.db pal_blkC, $10 + pal_grey, $10 + pal_redB, $10 + pal_bluB
+	.db pal_blkC, $10 + pal_grey, $10 + pal_bluB, $10 + pal_redB
+	.db pal_blkC, $20 + pal_bluB, $10 + pal_bluB, pal_bluA 
+	.db pal_blkC, $20 + pal_bluB, $10 + pal_bluB, pal_bluA 
+	.db pal_blkC, $20 + pal_bluB, $10 + pal_bluB, pal_bluA 
+	.db pal_blkC, $20 + pal_bluB, $10 + pal_bluB, pal_bluA 
+	.db $00
+ENDIF
 BonusChanceText_X_1:
 	.db $22,$30,$03,$EA,$FB,$D1
 BonusChanceText_EXTRA_LIFE_1:
 	.db $22,$C9,$0F,$DE,$F1,$ED,$EB,$DA,$FB,$E5,$E2,$DF,$DE,$F9,$F9
 	.db $F9,$FB,$D1,$00 ; $0F
 BonusChanceBackgroundPalettes:
-	.db $0F,$27,$17,$07 ; $00
-	.db $0F,$37,$16,$12 ; $04
-	.db $0F,$30,$10,$00 ; $08
-	.db $0F,$21,$12,$01 ; $0C
+IFNDEF CUSTOM_TITLE
+	.db pal_blkC, $20 + pal_orng, $10 + pal_orng, $00 + pal_orng ; $00
+	.db pal_blkC, $30 + pal_orng, $10 + pal_redB, $10 + pal_bluB ; $04
+	.db pal_blkC, $30 + pal_grey, $10 + pal_grey, $00 + pal_grey ; $08
+	.db pal_blkC, $20 + pal_bluA, $10 + pal_bluB, $00 + pal_bluA ; $0C
+ELSE
+	.db pal_blkC, $20 + pal_orng, $10 + pal_orng, $00 + pal_orng ; $00
+	.db pal_blkC, $30 + pal_orng, $10 + pal_redB, $10 + pal_bluB ; $04
+	.db pal_blkC, $30 + pal_grey, $10 + pal_grey, $00 + pal_grey ; $08
+	.db pal_blkC, $20 + pal_bluA, $10 + pal_bluB, $00 + pal_bluA ; $0C
+ENDIF
 BonusChanceReel1Order:
 	.db Slot_Snifit ; $00
 	.db Slot_Turnip ; $01 ; Graphics exist for a mushroom (not used)
@@ -660,5 +680,9 @@ ENDIF
 
 
 IFDEF DEBUG
-	.include "src/extras/debug-a.asm"
+	.include "src/extras/debug/debug-a.asm"
+ENDIF
+
+IFDEF SECONDARY_ROUTINE_MOVE
+	.include "src/systems/area_secondary_routine.asm"
 ENDIF

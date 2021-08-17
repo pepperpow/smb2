@@ -1,4 +1,4 @@
-.include "src/extras/custom-player-render.asm"
+.include "src/extras/player/custom-player-render.asm"
 
 
 ; Tiles to use for eye sprite. If $00, this will use the character-specific table
@@ -24,7 +24,7 @@ CharacterEyeTiles:
 
 DamageInvulnBlinkFrames:
 	.db $01, $01, $01, $02, $02, $04, $04, $04
-
+	
 ;
 ; Renders the player sprite
 ;
@@ -76,7 +76,6 @@ loc_BANKF_F345:
 
 loc_BANKF_F350:
 	LDA PlayerScreenX
-IFDEF TEST_FLAG ;; MINE
     LDA PlayerCurrentSize ;; move X pos depending on if "wide"
     BNE ++
     LDX CurrentCharacter
@@ -97,14 +96,12 @@ IFDEF TEST_FLAG ;; MINE
     JMP ++
 ++
 	LDA PlayerScreenX
-ENDIF
 	STA SpriteDMAArea + $23
 	STA SpriteDMAArea + $2B
 	CLC
 	ADC #$08
 	STA SpriteDMAArea + $27
 	STA SpriteDMAArea + $2F
-IFDEF TEST_FLAG
     LDA PlayerDirection
     BEQ +
 	LDA PlayerScreenX
@@ -118,9 +115,7 @@ IFDEF TEST_FLAG
 ++
 	STA SpriteDMAArea + $1B
 	STA SpriteDMAArea + $1F
-ENDIF
 	LDA PlayerScreenYLo
-IFDEF TEST_FLAG
 	LDX PlayerAnimationFrame
 	CPX #SpriteAnimation_Ducking
     BEQ +
@@ -128,7 +123,6 @@ IFDEF TEST_FLAG
     CLC
     ADC HeightOffset, X
 +
-ENDIF
 	STA byte_RAM_0
 	LDA PlayerScreenYHi
 	STA byte_RAM_1
@@ -140,31 +134,19 @@ ENDIF
 	BEQ loc_BANKF_F382
 
 	LDA byte_RAM_0
-IFDEF TEST_FLAG
     LDX CurrentCharacter
     CLC
     ADC HeightOffset + 4, X
-ENDIF
-IFNDEF TEST_FLAG
-	CLC
-	ADC #$08
-ENDIF
+
 	STA byte_RAM_0
 	BCC loc_BANKF_F382
 
 	INC byte_RAM_1
 
 loc_BANKF_F382:
-IFNDEF TEST_FLAG
-	LDA CurrentCharacter
-	CMP #Character_Princess
-	BEQ loc_BANKF_F394
-ENDIF
-IFDEF TEST_FLAG
     LDA DokiMode, X
     AND #CustomCharFlag_PeachWalk
 	BNE loc_BANKF_F394
-ENDIF
 
 	CPY #$00
 	BNE loc_BANKF_F394
@@ -220,7 +202,6 @@ loc_BANKF_F3CA:
 	AND #%11111100
 	ORA #ObjAttrib_Palette1
 	STA SpriteDMAArea + 2, Y
-IFDEF TEST_FLAG
 	AND #$FC
 	ORA PlayerAttributes
 	STA SpriteDMAArea + $22
@@ -230,7 +211,6 @@ IFDEF TEST_FLAG
     LDA PlayerCurrentSize
     JSR ApplyMetaInformation
 	LDX PlayerAnimationFrame
-ENDIF
 	LDA CharacterFrameEyeTiles, X
 	BNE loc_BANKF_F408
 
@@ -249,18 +229,15 @@ loc_BANKF_F413:
 	ASL A
 	ASL A
 	TAX
-IFDEF TEST_FLAG
     LDA PlayerCurrentSize
     BEQ +
     JMP RenderSmallPlayer
 +
-ENDIF
 	LDA PlayerDirection
 	BNE loc_BANKF_F44A
 
 	LDA SpriteDMAArea + $23
 	STA SpriteDMAArea + 3, Y
-IFDEF TEST_FLAG
     TXA
     CLC
 	LDX CurrentCharacter
@@ -359,60 +336,3 @@ loc_BANKF_F478:
 ;+
 +++
     RTS
-
-
-ENDIF
-
-IFNDEF TEST_FLAG
-	LDA CharacterTiles_Walk1, X
-	STA SpriteDMAArea + $21
-	LDA CharacterTiles_Walk1 + 1, X
-	STA SpriteDMAArea + $25
-	LDA PlayerCurrentSize
-	BNE loc_BANKF_F43F
-
-	LDA CurrentCharacter
-	CMP #Character_Princess
-	BNE loc_BANKF_F43F
-
-	LDA PlayerAnimationFrame
-	CMP #SpriteAnimation_Jumping
-	BNE loc_BANKF_F43F
-
-	LDX #$2A
-
-loc_BANKF_F43F:
-	LDA CharacterTiles_Walk1 + 2, X
-	STA SpriteDMAArea + $29
-	LDA CharacterTiles_Walk1 + 3, X
-	BNE loc_BANKF_F478
-
-loc_BANKF_F44A:
-	LDA SpriteDMAArea + $27
-	STA SpriteDMAArea + 3, Y
-	LDA CharacterTiles_Walk1 + 1, X
-	STA SpriteDMAArea + $21
-	LDA CharacterTiles_Walk1, X
-	STA SpriteDMAArea + $25
-	LDA PlayerCurrentSize
-	BNE loc_BANKF_F46F
-
-	LDA CurrentCharacter
-	CMP #Character_Princess
-	BNE loc_BANKF_F46F
-
-	LDA PlayerAnimationFrame
-	CMP #SpriteAnimation_Jumping
-	BNE loc_BANKF_F46F
-
-	LDX #$2A
-
-loc_BANKF_F46F:
-	LDA CharacterTiles_Walk1 + 3, X
-	STA SpriteDMAArea + $29
-	LDA CharacterTiles_Walk1 + 2, X
-
-loc_BANKF_F478:
-	STA SpriteDMAArea + $2D
-	RTS
-ENDIF
