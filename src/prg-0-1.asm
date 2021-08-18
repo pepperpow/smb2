@@ -2395,7 +2395,7 @@ HandlePlayerState_JustClimb_Physics:
 	JMP ApplyPlayerPhysicsY
 
 HandlePlayerState_SetClimbing:
-IFDEF RANDOMIZER_FLAGS
+IFDEF RANDOMIZER_FLAGS_DISABLED
 	JSR PlayerTileCollision_CheckClimbable
 	BCS +ok
 	LDY #$02

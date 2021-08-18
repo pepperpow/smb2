@@ -100,13 +100,44 @@ AreaTransitionPlacement_Randomizer:
 	STA PlayerInRocket
 	STA HoldingItem
 +
-    JSR AreaTransitionPlacement_Reset
+    STA PlayerState
+	LDA #SpriteAnimation_Standing
+	STA PlayerAnimationFrame
     JSR AreaTransitionPlacement_DoorCustom
-    BCS +
-    JSR AreaTransitionPlacement_ClimbingCustom
-    BCS +
+    BCS +end
+
+	JSR AreaTransitionPlacement_Climbing
+	LDA PlayerAnimationFrame
+	CMP #SpriteAnimation_Climbing
+	BEQ +ok
+
+    LDA #$0
+    STA PlayerXLo
+	STA PlayerYLo
+	JSR AreaTransitionPlacement_ClimbingCustom
+	BCS +ok
+	LDA #$F0
+	STA PlayerYLo
+	JSR AreaTransitionPlacement_ClimbingCustom
+	BCC +
++ok
+	LDA #SpriteAnimation_Climbing
+	STA PlayerAnimationFrame
+    LDA #PlayerState_ClimbingAreaTransition
+    STA PlayerState
+	LDY #$1
+	LDA PlayerYLo
+	BPL ++
+	INY
+++  LDA ClimbSpeed, Y
+	STA PlayerYVelocity
+    BNE +end
++
     JSR AreaTransitionPlacement_Reset
-+   RTS
++end
+    RTS
+
+AreaTransitionPlacement_Ground:
 END
 
 ELSE
@@ -312,9 +343,9 @@ AreaTransitionPlacement_DoorCustom_InnerLoop:
 +notjar
 	; No matches on this tile, check the next one or give up
 	DEC byte_RAM_E7
-	BEQ AreaTransitionPlacement_Door_Fallback
+	BEQ AreaTransitionPlacement_DoorCustom_Fallback
 
-	JMP AreaTransitionPlacement_DoorCustom_Loop
+	BNE AreaTransitionPlacement_DoorCustom_Loop
 
 AreaTransitionPlacement_DoorCustom_Fallback:
 	LDA #$20
@@ -339,7 +370,7 @@ AreaTransitionPlacement_DoorCustom_Exit:
 	JSR AreaTransitionPlacement_MovePlayerUp1Tile
 	LDA #$00
 	STA PlayerLock
-    CLS
+    SEC
     RTS
 ENDIF
 
@@ -428,6 +459,8 @@ AreaTransitionPlacement_Climbing_UnreversePositionY:
 	LDA PlayerYHi
 	EOR #$FF
 	STA PlayerYHi
+
+    RTS
 
 AreaTransitionPlacement_Climbing_SetPlayerAnimationFrame:
 ENDIF
