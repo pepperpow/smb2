@@ -2134,28 +2134,26 @@ ENDM
 LevelData_1_1_Area0:
 	levelHeaderRLE 9, LevelDirection_Horizontal, 0, 0, LevelMusic_Overworld
     rleSimple CMD_SimpleHorizontal, 16, 14, 0, BackgroundTile_SolidBrick1
+    rleSimple CMD_SimpleVertical, 12, 5, 4, BackgroundTile_Vine
     rlePage 0
-    rleSimple CMD_SimpleHorizontal, 0, 14, 0, BackgroundTile_SolidBrick1
-    rleSimple CMD_SimpleHorizontal, 0, 12, 0, BackgroundTile_SolidBrick1
-    rleBase CMD_ArrayVertical, 4, 10, 5
-		.db BackgroundTile_JarTopGeneric
-		.db BackgroundTile_JarBottom
+    rleSimple CMD_SimpleVertical, 12, 0, 4, BackgroundTile_Vine
+    rleSimple CMD_SimpleHorizontal, 16, 14, 0, BackgroundTile_SolidBrick1
     rlePage 0
-    rleSimple CMD_SimpleHorizontal, 0, 14, 0, BackgroundTile_SolidBrick1
-    rleDoorPtr 0, 0, 5, 0
+    rleSimple CMD_SimpleHorizontal, 16, 14, 0, BackgroundTile_SolidBrick1
     rleSimple CMD_SimpleHorizontal, 5, 13, 4, BackgroundTile_GrassSmallVeggie
     rleSimple CMD_SimpleHorizontal, 1, 13, 12, BackgroundTile_GrassPotion
-    rleBase CMD_ArrayVertical, 2, 12, 5
-		.db BackgroundTile_JarTopPointer
-		.db BackgroundTile_JarBottom
+    rlePage 0
+    rleSimple CMD_SimpleVertical, 12, 0, 4, BackgroundTile_Vine
+    rleSimple CMD_SimpleHorizontal, 16, 14, 0, BackgroundTile_SolidBrick1
+    rleDoorPtr 0, 0, 0, 4
+    rlePage 0
+    rleSimple CMD_SimpleHorizontal, 16, 14, 0, BackgroundTile_SolidBrick1
+    rleSimple CMD_SimpleVertical, 13, 5, 5, BackgroundTile_Ladder
+    rleDoorPtr 0, 0, 0, 0
     rlePage 0
     rleSimple CMD_SimpleHorizontal, 16, 14, 0, BackgroundTile_SolidBrick1
     rlePage 0
-    rleSimple CMD_SimpleHorizontal, 0, 14, 0, BackgroundTile_SolidBrick1
-    rlePage 0
-    rleSimple CMD_SimpleHorizontal, 0, 14, 0, BackgroundTile_SolidBrick1
-    rlePage 0
-    rleSimple CMD_SimpleHorizontal, 0, 14, 0, BackgroundTile_SolidBrick1
+    rleSimple CMD_SimpleHorizontal, 16, 14, 0, BackgroundTile_SolidBrick1
     rlePage 0
     rleDoorPtr 0, 0, 1, 0
     rleChangeRawData TemplateLevel

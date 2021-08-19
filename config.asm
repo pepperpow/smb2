@@ -188,12 +188,50 @@ HAWKMOUTH_FIX = 1 ; Hawkmouth in two directions
 TEST_FLAG_VERT_SUB = 1 ; Vertical subspace
 MUSH_BLOCK_FIX = 1 ; block fix
 
-AreaTransitioned_Invuln = $7603
-CharacterLock_Variable = $7610
-VertSubspaceFlag = $73F4
+; ram locs, flags
+Level_Bit_Flags = $7300
+World_Bit_Flags = $73D2
+
+Level_Count_Discovery = $73E0
+Level_Count_MushCount = $73E1
+Level_Count_Coins = $73E2
+Level_Count_1ups = $73E3
+Level_Count_SubspaceVisits = $73E4
+Level_Count_Unlocks = $73E5
+Level_Count_BigKill = $73E6
+Level_Count_KillCnt = $73E6
+Level_Count_LivesLost = $73E7
+Level_Count_Crystals = $73E8
+Level_Count_Cherries = $73E9
+World_Count_Bosses = $73EF
+
 CurrentLevelAreaIndex = $73F0
-PlayerIndependentLives = $73F8
 BossHP = $73F2
+VertSubspaceFlag = $73F4
+PlayerIndependentLives = $73F8
+
+AreaTransitioned_Invuln = $7603
+CrushTimer = $7604
+CharacterLock_Variable = $7610
+
+CustomBitFlag_Sub1 =    %00000001
+CustomBitFlag_Sub2 =    %00000010
+CustomBitFlag_Visited = %00000100
+CustomBitFlag_Mush1 =   %00001000
+CustomBitFlag_Mush2 =   %00010000
+CustomBitFlag_1up =     %00100000
+CustomBitFlag_Key =     %01000000
+CustomBitFlag_Crystal = %10000000
+
+CustomBitFlag_Boss_Defeated = %00000010
+
+CustomCharFlag_StandFrame = %00000001
+CustomCharFlag_Fluttering = %00000100
+CustomCharFlag_PeachWalk =  %00001000
+CustomCharFlag_BounceJump =  %00010000
+CustomCharFlag_BounceAll =   %00100000
+CustomCharFlag_GroundPound = %01000000
+CustomCharFlag_WideSprite = %10000000
 
 ; ;; Code changes
 CUSTOM_LEVEL_RLE = 1 ; Custom Level Generation

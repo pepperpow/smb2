@@ -1482,15 +1482,17 @@ loc_BANKF_E61A:
 
 	INC SubspaceVisits
 
-IFDEF LEVEL_FLAGS ;; this activates _every_ transition??
+IFDEF RANDOMIZER_FLAGS
     INC Level_Count_SubspaceVisits
-    LDX #CustomBitFlag_Sub1
-    JSR ApplyFlagLevel
-    BNE +
-    LDX #CustomBitFlag_Sub2
-    JSR ApplyFlagLevel 
-    BNE +
-+   
+	LDY CurrentLevelAreaIndex
+	LDA Level_Bit_Flags, Y
+    ORA #CustomBitFlag_Sub1
+	STA Level_Bit_Flags, Y
+    AND #CustomBitFlag_Sub2
+	BNE +
+	LDA Level_Bit_Flags, Y
+    ORA #CustomBitFlag_Sub2
++
 ENDIF
 
 loc_BANKF_E627:
@@ -1795,9 +1797,6 @@ IFDEF FLAG_SYSTEM
     LDA Level_Count_Crystals
     CMP CrystalCondition
     BCC ++ 
-    LDA World_Count_Bosses 
-    CMP BossCondition 
-    BCC ++
     LDA RescueCondition 
     BEQ +
     LDA CharacterLock_Variable
@@ -1815,6 +1814,9 @@ IFDEF FLAG_SYSTEM
 ENDIF
 
 IFDEF RANDOMIZER_FLAGS
+    LDA World_Count_Bosses 
+    CMP BossCondition 
+    BCC EndOfLevelSlotMachine
 	LDA WinLevel
     CMP #$FF
     BNE +
@@ -2172,6 +2174,13 @@ EndingSceneRoutine:
 	STA SoundEffectPlaying1
 	LDA #PRGBank_0_1
 	JSR ChangeMappedPRGBank
+
+IFDEF RANDOMIZER_FLAGS
+	LDA #$6
+	STA CurrentWorldTileset
+	STA CurrentWorld
+	JSR LoadWorldCHRBanks
+ENDIF
 
 	JSR FreeSubconsScene
 
@@ -4859,9 +4868,6 @@ CopyJarDataToMemory:
 	CLC
 	ADC #AreaIndex_Jar
 	TAY
-IFDEF RANDOMIZER_FLAGS
-    STA CurrentLevelAreaIndex
-ENDIF
 	; Calculate the pointer for the start of the level data.
 	LDA LevelDataPointersLo, Y
 	STA byte_RAM_5

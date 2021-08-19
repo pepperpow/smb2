@@ -801,7 +801,7 @@ CheckCollisionWithPlayer_NotInvincible:
 	AND #%00000001
 	BNE CheckCollisionWithPlayer_HurtPlayer
 
-IFDEF CUSTOM_MUSH
+IFDEF RANDOMIZER_FLAGS
     JSR JumpAttack
 	LDX byte_RAM_ED
 	LDY byte_RAM_12
@@ -1208,6 +1208,8 @@ IFDEF CUSTOM_MUSH
     BCS +++
     JMP ++
 +++ 
+ENDIF
+IFDEF RANDOMIZER_FLAGS
 DamageEnemySingle:
     DEC EnemyHP - 1, X
 ++

@@ -21,20 +21,14 @@ CharacterInitialLock:
     .BYTE 0
 
 DokiMode:
-    .db %0011  ;; doki
-    .db %1011  ;; doki
-    .db %0011  ;; doki
-    .db %0111  ;; doki
+    .db 0  ;; doki
+    .db CustomCharFlag_PeachWalk
+    .db 0  ;; doki
+    .db CustomCharFlag_Fluttering
 
 HeightOffset:
     .db 0,0,0,0
     .db 8,8,8,8
-
-CustomCharFlag_Shrinking = %00000001
-CustomCharFlag_Running = %00000010
-CustomCharFlag_Fluttering = %00000100
-CustomCharFlag_PeachWalk = %00001000
-CustomCharFlag_WideSprite = %10000000
 
 CharLookupTable:
 	.db $01 ; Mio 

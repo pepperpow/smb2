@@ -22,8 +22,45 @@ AreaInitialization:
 	STA JumpFloatTimer
 	STA QuicksandDepth
 	STA BossBeaten
-IFDEF FLAG_SYSTEM
+IFDEF RANDOMIZER_FLAGS
     STA SubspaceVisits
+	STA KeyUsed
+	STA Mushroom1upPulled
+	STA Mushroom1Pulled
+	STA Mushroom1Pulled + 1
+
+	LDY CurrentLevelAreaIndex
+	LDA Level_Bit_Flags, Y
+	AND #CustomBitFlag_Crystal
+	BEQ +
+    INC CrystalAndHawkmouthOpenSize
++   
+	LDA Level_Bit_Flags, Y
+	AND #CustomBitFlag_Sub2
+    BEQ +
+    LDA #$2
+    STA SubspaceVisits
++   
+	LDA Level_Bit_Flags, Y
+	AND #CustomBitFlag_Key
+    BEQ +
+    INC KeyUsed
++   
+	LDA Level_Bit_Flags, Y
+	AND #CustomBitFlag_1up
+    BEQ +
+    INC Mushroom1upPulled
++   
+	LDA Level_Bit_Flags, Y
+	AND #CustomBitFlag_Mush1
+    BEQ +
+    INC Mushroom1Pulled
++   
+	LDA Level_Bit_Flags, Y
+	AND #CustomBitFlag_Mush2
+    BEQ +
+    INC Mushroom1Pulled + 1
++   
 ENDIF
 IFDEF TRANSITION_INVULN
     LDA TransitionType
@@ -33,27 +70,6 @@ IFDEF TRANSITION_INVULN
     STA AreaTransitioned_Invuln
 +
 ENDIF 
-IFDEF LEVEL_FLAGS
-	LDA #$0
-	STA KeyUsed
-    TXA
-    PHA
-    LDX #CustomBitFlag_Crystal
-    JSR ChkFlagLevel
-    BNE +
-    INC CrystalAndHawkmouthOpenSize
-+   LDX #CustomBitFlag_Sub2
-    JSR ChkFlagLevel 
-    BNE +
-    LDA #2
-    STA SubspaceVisits
-+   LDX #CustomBitFlag_Key
-    JSR ChkFlagLevel
-    BNE +
-    INC KeyUsed
-+   PLA
-    TAX
-ENDIF
 
 IFDEF RESET_CHR_LATCH
 	LDY #$FF

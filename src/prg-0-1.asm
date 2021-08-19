@@ -2810,6 +2810,17 @@ loc_BANK0_8D4D:
 	CMP #SpriteAnimation_Throwing
 	BEQ locret_BANK0_8D61
 
+IFDEF CUSTOM_PLAYER_RENDER
+	LDX CurrentCharacter
+	LDA DokiMode, X
+	AND #CustomCharFlag_StandFrame
+	BEQ +
+	LDA #SpriteAnimation_Climbing + 1
+	STA PlayerAnimationFrame
+	BNE locret_BANK0_8D61
++
+ENDIF
+
 	LDA #SpriteAnimation_Standing
 	STA PlayerAnimationFrame
 	LDA #$00
@@ -3457,16 +3468,15 @@ IFNDEF BLOCK_CHECK
 	BCC CheckPlayerTileCollision_Exit
 ENDIF
 IFDEF BLOCK_CHECK
-	BCS + 
+	BCS + ;; If We're a Solid Object...
     JMP CheckPlayerTileCollision_Exit
-+
-    LDA PlayerYVelocity
++   LDA PlayerYVelocity ;; Moving Up
     BPL ++
-    LDA PlayerCollision
+    LDA PlayerCollision ;; Collision Upward
     CMP #CollisionFlags_Up
     BNE ++
     LDA byte_RAM_0
-	CMP #BackgroundTile_MushroomBlock
+	CMP #BackgroundTile_MushroomBlock ;; Lift Mushroom Blocks
     BNE +
     LDA HoldingItem
     BNE +
@@ -3478,9 +3488,8 @@ IFDEF BLOCK_CHECK
 	LDA #$02
 	STA PlayerStateTimer
     JMP CheckPlayerTileCollision_Exit
-+
-	LDA byte_RAM_0
-	CMP #BackgroundTile_POWBlock
++   LDA byte_RAM_0
+	CMP #BackgroundTile_POWBlock ;; Pow Block hit
     BNE +
 	JSR CreateEnemy_TryAllSlots_Bank1
 	LDX byte_RAM_0
@@ -3851,17 +3860,17 @@ loc_BANK0_90C5:
 	CMP #Enemy_Mushroom1up
 	BNE loc_BANK0_90D5
 
-IFDEF LEVEL_FLAGS
-    TXA
-    PHA
-    LDX #CustomBitFlag_1up 
-    JSR ApplyFlagLevel
-    BEQ +
+IFDEF RANDOMIZER_FLAGS
+	LDY CurrentLevelAreaIndex
+	LDA Level_Bit_Flags, Y
+    AND #CustomBitFlag_1up
+    BNE +
+	LDA Level_Bit_Flags, Y
+    ORA #CustomBitFlag_1up
+	STA Level_Bit_Flags, Y
     INC Level_Count_1ups
     DEC Mushroom1upPulled
 +   INC Mushroom1upPulled 
-    PLA
-    TAX
 ENDIF
 
 	LDA Mushroom1upPulled
@@ -4184,14 +4193,6 @@ DoorHandling_Exit:
 
 
 DoorHandling_LockedDoor:
-IFDEF LOCKED_DOOR
-    LDX #CustomBitFlag_MasterKey
-    LDA #$0
-    JSR ChkFlagPlayer2
-    BEQ SetFlagUnlock  ;; still need to have an object to set ?
-    LDA KeyUsed
-	BNE SetFlagUnlock
-ENDIF
 IFDEF CUSTOM_LEVEL_RLE
 	LDA KeyUsed
 	BEQ +no
@@ -4215,12 +4216,12 @@ ENDIF
 	TAX
 
 	JSR TurnKeyIntoPuffOfSmoke
-IFDEF LOCKED_DOOR
-SetFlagUnlock:
-    LDX #CustomBitFlag_Key 
-    JSR ApplyFlagLevel
+IFDEF RANDOMIZER_FLAGS
+	LDY CurrentLevelAreaIndex
+	LDA Level_Bit_Flags, Y
+    ORA #CustomBitFlag_Key
+	STA Level_Bit_Flags, Y
     INC Level_Count_Unlocks
-	INC KeyUsed
 ENDIF
 	JSR DoorAnimation_Locked
 	JMP DoorHandling_GoThroughDoor

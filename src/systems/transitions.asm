@@ -73,10 +73,14 @@ ApplyAreaTransition_MoveCamera:
 ; Do the player placement after an area transition
 ;
 AreaTransitionPlacement:
-IFDEF LEVEL_FLAGS
-    LDX #CustomBitFlag_Visited
-    JSR ApplyFlagLevel
-    BEQ +
+IFDEF RANDOMIZER_FLAGS
+	LDY CurrentLevelAreaIndex
+	LDA Level_Bit_Flags, Y
+    AND #CustomBitFlag_Visited
+    BNE +
+	LDA Level_Bit_Flags, Y
+    ORA #CustomBitFlag_Visited
+	STA Level_Bit_Flags, Y
 	LDX CurrentCharacter
 	INC CharacterLevelsCompleted, X
     INC Level_Count_Discovery
@@ -111,9 +115,14 @@ AreaTransitionPlacement_Randomizer:
 	CMP #SpriteAnimation_Climbing
 	BEQ +ok
 
+	LDA PlayerYHi
+	BPL +
+	AND #$0
+	STA PlayerYHi
++
     LDA #$0
-    STA PlayerXLo
 	STA PlayerYLo
+    STA PlayerXLo
 	JSR AreaTransitionPlacement_ClimbingCustom
 	BCS +ok
 	LDA #$F0
@@ -125,9 +134,11 @@ AreaTransitionPlacement_Randomizer:
 	STA PlayerAnimationFrame
     LDA #PlayerState_ClimbingAreaTransition
     STA PlayerState
+    LDA #$D0
+	STA PlayerYLo
 	LDY #$1
-	LDA PlayerYLo
-	BPL ++
+	LDA PlayerYHi
+	BMI ++
 	INY
 ++  LDA ClimbSpeed, Y
 	STA PlayerYVelocity

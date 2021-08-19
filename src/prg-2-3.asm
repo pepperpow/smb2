@@ -432,6 +432,19 @@ IFDEF CUSTOM_MUSH
  	LDX byte_RAM_12
      RTS
 ENDIF
+IFDEF RANDOMIZER_FLAGS
+BossDefeatedFlagSet:
+	LDY CurrentWorld
+	LDA World_Bit_Flags, Y
+    AND #CustomBitFlag_Boss_Defeated
+	BNE +
+	LDA World_Bit_Flags, Y
+    ORA #CustomBitFlag_Boss_Defeated
+	STA World_Bit_Flags, Y
+    INC World_Count_Bosses
+	RTS
++
+ENDIF
 
 HandleEnemyState_Dead:
 	JSR sub_BANK3_B5CC
@@ -471,13 +484,8 @@ loc_BANK2_852D:
 	LDA #%01000001
 	STA ObjectAttributes, X
 	STA EnemyArray_46E, X
-IFDEF LEVEL_FLAGS
-     LDX #CustomBitFlag_Boss_Defeated 
-     JSR ApplyFlagWorld
-     BEQ +
-     INC World_Count_Bosses
- +
-	JSR BossDefeatMush
+IFDEF RANDOMIZER_FLAGS
+	JSR BossDefeatedFlagSet
 ENDIF
 	JMP TurnIntoPuffOfSmoke
 
@@ -2587,6 +2595,9 @@ BirdoHealthEggProbabilities:
 	.db $08
 	.db $06
 	.db $04
+IFDEF RANDOMIZER_FLAGS
+	.db $04
+ENDIF
 
 
 loc_BANK2_8FA3:
@@ -2640,7 +2651,13 @@ BirdoBehavior_SpitProjectile:
 
 	BMI loc_BANK2_901B
 
+IFDEF RANDOMIZER_FLAGS
+	LDA EnemyHP, X
+	AND %11
+	TAY
+ELSE
 	LDY EnemyHP, X
+ENDIF
 	LDA EnemyVariable, X
 	LDX byte_RAM_0
 	CMP #$02 ; If we're a Gray Birdo, always shoot fire
@@ -2779,19 +2796,14 @@ EnemyBehavior_Mushroom_PickUp:
 	CMP #Enemy_CrystalBall
 	BNE EnemyBehavior_PickUpNotCrystalBall
 
-	LDA CrystalAndHawkmouthOpenSize
-IFDEF LEVEL_FLAGS
-    TXA
-    PHA
-    LDX #CustomBitFlag_Crystal
-    JSR ApplyFlagLevel
-    BEQ +
+IFDEF RANDOMIZER_FLAGS
+	LDY CurrentLevelAreaIndex
+	LDA Level_Bit_Flags, Y
+    ORA #CustomBitFlag_Crystal
+	STA Level_Bit_Flags, Y
     INC Level_Count_Crystals
-+
-    PLA
-    TAX
-	LDA CrystalAndHawkmouthOpenSize
 ENDIF
+	LDA CrystalAndHawkmouthOpenSize
 	BNE EnemyBehavior_CrystalBall_Exit
 
 	LDA #Music2_CrystalGetFanfare
@@ -2819,12 +2831,28 @@ IFDEF CUSTOM_MUSH
     LDA #Enemy_MushroomBlock
     STA ObjectType, X
     JSR ProcessCustomPowerupAward
-ELSE
+	; skip past this...
+ENDIF
 	LDX EnemyVariable
 	INC Mushroom1Pulled, X
 	LDX byte_RAM_12
 	INC PlayerMaxHealth
 	JSR RestorePlayerToFullHealth
+IFDEF RANDOMIZER_FLAGS
+	LDA Mushroom1Pulled
+	BEQ +
+	LDY CurrentLevelAreaIndex
+	LDA Level_Bit_Flags, Y
+	ORA #CustomBitFlag_Mush1
+	STA Level_Bit_Flags, Y
++
+	LDA Mushroom1Pulled + 1
+	BEQ +
+	LDY CurrentLevelAreaIndex
+	LDA Level_Bit_Flags, Y
+	ORA #CustomBitFlag_Mush2
+	STA Level_Bit_Flags, Y
++
 ENDIF
 
 	LDA #Music2_MushroomGetJingle
@@ -8182,8 +8210,8 @@ IFDEF CONTROLLER_2_DEBUG
 .include "src/extras/debug/controller-2-3-debug.asm"
 ENDIF
 
-IFDEF CUSTOM_MUSH
-.include "src/extras/jump-attack.asm"
+IFDEF RANDOMIZER_FLAGS
+.include "src/extras/player/jump-attack.asm"
 ENDIF
 
 

@@ -314,13 +314,23 @@ SetBossHijack:
 	LDA (RawEnemyData), Y
 	AND #%00111111
 	BNE CheckObjectSpawnBoundaries_InitializePage_SetObjectType
+	
 SetBossHealth_Hijack:
 	LDA EnemyHP, X
 	CLC
     ADC BossHP
 	STA EnemyHP, X
-	RTS
-+ok
+
+	LDA EnemyArray_SpawnsDoor, X
+    BEQ ++
+	LDA ObjectXHi, X
+	STA unk_RAM_4EF, X
+	LDY CurrentWorld
+	LDA World_Bit_Flags, Y
+    AND #CustomBitFlag_Boss_Defeated 
+	BEQ ++
+    INC EnemyState, X
+++  RTS
 ENDIF
 
 CheckObjectSpawnBoundaries_InitializePage_SetObjectType:
@@ -328,26 +338,6 @@ CheckObjectSpawnBoundaries_InitializePage_SetObjectType:
 	TYA
 	STA EnemyRawDataOffset, X
 	INC EnemyState, X
-IFDEF LEVEL_FLAGS
-	LDA EnemyArray_SpawnsDoor, X
-    BEQ ++
-;    JSR Set_CustomBossHp
-	LDA ObjectXHi, X
-	STA unk_RAM_4EF, X
-    TXA
-    PHA
-    LDX #CustomBitFlag_Boss_Defeated 
-    JSR ChkFlagWorld
-    BNE +
-    PLA
-    TAX
-    INC EnemyState, X
-    JMP ++
-+   PLA
-    TAX
-++
-    ;;hotspot location here (but what would it do)
-ENDIF
 	LDA ObjectType, X
 
 InitializeEnemy:

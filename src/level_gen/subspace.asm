@@ -150,30 +150,9 @@ DoSubspaceTileRemap_Loop:
 DoSubspaceTileRemap_CheckCreateMushroom:
 	SEC
 	SBC #BackgroundTile_SubspaceMushroom1
-IFNDEF CUSTOM_MUSH
 	TAY
 	LDA Mushroom1Pulled, Y
 	BNE DoSubspaceTileRemap_AfterCreateMushroom
-ENDIF
-IFDEF CUSTOM_MUSH
-    PHA
-    TAY
-    TAX
-    LDA InSubspaceOrJar
-    CMP #$02
-    BNE ++
-    JSR GetMushFlag_Bitmask
-    JSR ChkFlagLevel
-    BNE +
-++
-    PLA
-    CLC
-    ADC #BackgroundTile_SubspaceMushroom1
-    TAY
-	JMP DoSubspaceTileRemap_AfterCreateMushroom + 2
-+   PLA
-    TAY
-ENDIF
 	LDX byte_RAM_7
 	JSR CreateSubspaceMushroomObject
 
