@@ -192,6 +192,7 @@ EnemyBehavior_Wart_PhysicsX:
 	STA ObjectXVelocity, X
 	LDA WartBubbleYVelocity, Y
 	STA ObjectYVelocity, X
+WartLoadSpot:
 	LDA #Enemy_WartBubble
 	STA ObjectType, X
 	LDA ObjectYLo, X

@@ -2673,10 +2673,12 @@ ENDIF
 
 _Birdo_SpitFire:
 	INC EnemyVariable, X ; Shoot a fireball
+BirdoFireLoadSpot:
 	LDA #Enemy_Fireball
 	BNE EnemyBehavior_SpitProjectile
 
 _Birdo_SpitEgg:
+BirdoEggLoadSpot:
 	LDA #Enemy_Egg ; Shoot an egg
 
 
@@ -3199,6 +3201,7 @@ loc_BANK2_9256:
 	BMI loc_BANK2_926E
 
 	LDX byte_RAM_0
+AlbatossLoadSpot:
 	LDA #Enemy_BobOmb
 	STA ObjectType, X
 	LDA ObjectYLo, X
@@ -6322,6 +6325,7 @@ loc_BANK3_A17D:
 	ADC #$00
 	STA ObjectXHi, Y
 	LDX byte_RAM_0
+ClawgripLoadSpot:
 	LDA #Enemy_ClawgripRock
 	STA ObjectType, X
 	LDA PseudoRNGValues + 2

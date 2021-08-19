@@ -98,6 +98,7 @@ EnemyBehavior_Mouser_Throw:
 	BMI EnemyBehavior_Mouser_Exit
 
 	LDX byte_RAM_0
+MouserBombLoadSpot:
 	LDA #Enemy_Bomb
 	STA ObjectType, X
 	LDA ObjectYLo, X
@@ -170,7 +171,13 @@ RenderSprite_Mouser_Bomb:
 	ASL byte_RAM_EE
 	LDY #$00
 	STY_abs byte_RAM_F4
+IFDEF RANDOMIZER_FLAGS
+	LDA #%00000000 ; use tilemap 2
+	STA EnemyArray_46E, X
+	LDA #$34 ; could have been $34 from tilemap 1 instead
+ELSE
 	LDA #$38 ; could have been $34 from tilemap 1 instead
+ENDIF
 	JSR RenderSprite_DrawObject
 
 RenderSprite_Mouser_Exit:

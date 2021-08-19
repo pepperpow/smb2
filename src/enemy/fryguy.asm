@@ -164,6 +164,7 @@ loc_BANK3_ACE7:
 	JSR CreateEnemy
 
 	LDX byte_RAM_0
+FryGuyLoadSpot:
 	LDA #Enemy_Fireball
 	STA ObjectType, X
 	LDA ObjectXLo, X
