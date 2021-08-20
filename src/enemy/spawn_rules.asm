@@ -316,6 +316,7 @@ SetBossHijack:
 	BNE CheckObjectSpawnBoundaries_InitializePage_SetObjectType
 	
 SetBossHealth_Hijack:
+	LDX byte_RAM_12
 	LDA EnemyHP, X
 	CLC
     ADC BossHP

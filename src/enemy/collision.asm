@@ -1196,6 +1196,9 @@ sub_BANK3_BA5D:
 
 	JSR PlayBossHurtSound
 
+IFDEF RANDOMIZER_FLAGS
+DamageEnemySingle:
+ENDIF
 EnemyTakeDamage:
 	DEC EnemyHP - 1, X ; Subtract hit point
 IFDEF CUSTOM_MUSH
@@ -1208,12 +1211,6 @@ IFDEF CUSTOM_MUSH
     BCS +++
     JMP ++
 +++ 
-ENDIF
-IFDEF RANDOMIZER_FLAGS
-DamageEnemySingle:
-    DEC EnemyHP - 1, X
-++
-    LDA EnemyHP - 1, X
 ENDIF
 	BMI EnemyKnockout
 
