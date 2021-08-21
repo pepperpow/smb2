@@ -100,53 +100,88 @@ IFDEF RANDOMIZER_FLAGS
 AreaTransitionPlacement_Randomizer:
 	LDA PlayerInRocket
     BEQ +
-	LDA #$00
-	STA PlayerInRocket
+	AND #$00
 	STA HoldingItem
-+
++   STA PlayerInRocket
+	STA PlayerLock
     STA PlayerState
+
 	LDA #SpriteAnimation_Standing
 	STA PlayerAnimationFrame
     JSR AreaTransitionPlacement_DoorCustom
-    BCS +end
-
+    BCC +next
+	RTS
++next
+	LDA TransitionType
+	CMP #TransitionType_Vine
 	JSR AreaTransitionPlacement_Climbing
 	LDA PlayerAnimationFrame
 	CMP #SpriteAnimation_Climbing
-	BEQ +ok
+	BEQ +climb
++next
++dynamicclimb
+	LDX CurrentLevelEntryPage
+	JSR SetAreaPageAddr_Bank1
 
-	LDA PlayerYHi
-	BPL +
-	AND #$0
-	STA PlayerYHi
-+
-    LDA #$0
-	STA PlayerYLo
-    STA PlayerXLo
-	JSR AreaTransitionPlacement_ClimbingCustom
-	BCS +ok
-	LDA #$F0
-	STA PlayerYLo
-	JSR AreaTransitionPlacement_ClimbingCustom
-	BCC +
-+ok
+--- ; Start at the right and work backwards
+	LDA #$0F
+	STA byte_RAM_E7
+
+--  ; Read the target tile
+	LDY byte_RAM_E7
+	LDA (byte_RAM_1), Y
+	LDY #$09
+
+-   ; See if it matches any door tile
+	CMP ClimbableTiles-1, Y
+	BEQ +climb
+	DEY
+	BNE -
+	DEC byte_RAM_E7
+	LDA byte_RAM_E7
+	AND #$0F
+	BNE --
+
+	CPX CurrentLevelEntryPage
+	BEQ +next
+	INX
+	LDA #$EF
+	STA byte_RAM_E7
+	JMP ---
++climb
 	LDA #SpriteAnimation_Climbing
 	STA PlayerAnimationFrame
     LDA #PlayerState_ClimbingAreaTransition
     STA PlayerState
-    LDA #$D0
+	LDA TransitionType
+	CMP #TransitionType_Vine
+	BEQ +end
++climbSet
+	LDA IsHorizontalLevel
+	BEQ +
+	LDA CurrentLevelEntryPage
++   STA PlayerYHi
+	LDA byte_RAM_E7
+	AND #$F0
 	STA PlayerYLo
-	LDY #$1
-	LDA PlayerYHi
-	BMI ++
-	INY
+	LDA byte_RAM_E7
+	ASL
+	ASL
+	ASL
+	ASL
+	STA PlayerXLo
+ 	LDY #$2 ; up
+	LDA PlayerYLo
+    BNE ++
+ 	DEY ; down
 ++  LDA ClimbSpeed, Y
-	STA PlayerYVelocity
-    BNE +end
-+
+ 	STA PlayerYVelocity
+	RTS
++next
     JSR AreaTransitionPlacement_Reset
 +end
     RTS
+
 
 AreaTransitionPlacement_Ground:
 END
@@ -340,6 +375,8 @@ AreaTransitionPlacement_DoorCustom_InnerLoop:
 	DEY
 	BNE AreaTransitionPlacement_DoorCustom_InnerLoop
 
+    CMP #BackgroundTile_GrassRocket
+    BEQ AreaTransitionPlacement_DoorCustom_Exit
     CMP #BackgroundTile_JarTopPointer
     BNE +notjar 
 	LDY #$00
@@ -359,10 +396,12 @@ AreaTransitionPlacement_DoorCustom_InnerLoop:
 	BNE AreaTransitionPlacement_DoorCustom_Loop
 
 AreaTransitionPlacement_DoorCustom_Fallback:
+IFNDEF RANDOMIZER_FLAGS
 	LDA #$20
 	STA PlayerYLo
 	JSR AreaTransitionPlacement_Middle
 	JSR AreaTransitionPlacement_MovePlayerUp1Tile
+ENDIF
 	LDA #$00
 	STA PlayerLock
     CLC
