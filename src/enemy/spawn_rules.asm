@@ -309,7 +309,7 @@ IFDEF RANDOMIZER_FLAGS
 SetBossHijack:
 	LDA #>SetBossHealth_Hijack
 	PHA
-	LDA #<SetBossHealth_Hijack
+	LDA #<SetBossHealth_Hijack - 1
 	PHA
 	LDA (RawEnemyData), Y
 	AND #%00111111
