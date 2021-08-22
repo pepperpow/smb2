@@ -442,8 +442,8 @@ BossDefeatedFlagSet:
     ORA #CustomBitFlag_Boss_Defeated
 	STA World_Bit_Flags, Y
     INC World_Count_Bosses
-	RTS
 +
+	RTS
 ENDIF
 
 HandleEnemyState_Dead:

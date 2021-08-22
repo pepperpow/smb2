@@ -1965,6 +1965,10 @@ EnsureCorrectWorld_Loop:
 	STA CurrentLevelEntryPage_Init
 	LDY #$00
 	STY PlayerState_Init
+IFDEF RANDOMIZER_FLAGS
+TransitionTypeAfterWin:
+	LDY #$00
+ENDIF
 	STY TransitionType
 	STY TransitionType_Init
 	DEY
