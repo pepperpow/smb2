@@ -227,10 +227,10 @@ ClearDirectionalCollisionFlags_Exit:
 
 
 EnemyTileCollisionTable:
-	.db $02 ; jumpthrough bottom (y-velocity < 0)
-	.db $01 ; jumpthrough top (y-velocity > 0)
-	.db $02 ; jumpthrough right (x-velocity < 0)
-	.db $02 ; jumpthrough left (x-velocity > 0)
+	.db $02 ; JumpThrough bottom (y-velocity < 0)
+	.db $01 ; JumpThrough top (y-velocity > 0)
+	.db $02 ; JumpThrough right (x-velocity < 0)
+	.db $02 ; JumpThrough left (x-velocity > 0)
 	.db $00 ; treat background as solid
 	.db $00 ; treat background as solid
 	.db $00 ; treat background as solid
@@ -1554,7 +1554,7 @@ loc_BANK3_BBDD:
 ;
 ; Input
 ;   A = tile ID
-;   Y = collision handler type (0 = solid for mushroom blocks, 1 = jumpthrough, 2 = solid)
+;   Y = collision handler type (0 = solid for mushroom blocks, 1 = JumpThrough, 2 = solid)
 ; Output
 ;   C = whether or not collision type Y is relevant
 ;

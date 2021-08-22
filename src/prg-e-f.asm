@@ -4400,7 +4400,7 @@ ENDIF
 ; Solidness is broken into four tiers:
 ;   - background (no collisions)
 ;   - background to player/enemies, solid to mushroom blocks
-;   - jumpthrough block (collision on top only)
+;   - JumpThrough block (collision on top only)
 ;   - solid block (collision on all sides)
 ;
 ; Tiles are divided into groups of $40. For each category, the corresponding

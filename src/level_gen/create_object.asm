@@ -24,7 +24,7 @@ CreateObjects_30thruF0:
 	.dw CreateObject_VerticalBlocks ; $AX
 IFNDEF ENABLE_LEVEL_OBJECT_MODE
 	.dw CreateObject_WhaleOrDrawBridgeChain ; $BX
-	.dw CreateObject_JumpthroughPlatform ; $CX
+	.dw CreateObject_JumpThroughPlatform ; $CX
 ELSE
 	.dw CreateObject_Platform_BX ; $BX
 	.dw CreateObject_Platform_CX ; $CX
@@ -315,7 +315,7 @@ ENDIF
 ; - `byte_RAM_50E`: type of object to create (upper nybble of level object minus 3)
 ;
 ;     ```
-;     $00 = jumpthrough block
+;     $00 = JumpThrough block
 ;     $01 = solid block
 ;     $02 = grass
 ;     $03 = bridge
@@ -324,7 +324,7 @@ ENDIF
 ;     $06 = vertical rock with angle
 ;     $07 = ladder
 ;     $08 = whale
-;     $09 = jumpthrough platform
+;     $09 = JumpThrough platform
 ;     $0A = log platform
 ;     $0B = cloud platform
 ;     $0C = waterfall
@@ -547,7 +547,7 @@ CreateObject_LightEntranceLeft_World6or7Exit:
 ; - `byte_RAM_50E`: type of object to create (upper nybble of level object minus 3)
 ;
 ;     ```
-;     $00 = jumpthrough block
+;     $00 = JumpThrough block
 ;     $01 = solid block
 ;     $02 = grass
 ;     $03 = bridge
@@ -556,7 +556,7 @@ CreateObject_LightEntranceLeft_World6or7Exit:
 ;     $06 = vertical rock with angle
 ;     $07 = ladder
 ;     $08 = whale
-;     $09 = jumpthrough platform
+;     $09 = JumpThrough platform
 ;     $0A = log platform
 ;     $0B = cloud platform
 ;     $0C = waterfall
@@ -781,21 +781,21 @@ IFNDEF ENABLE_LEVEL_OBJECT_MODE
 ; Draws the typical green hill platforms in Worlds 1 through 6 or the mushroom
 ; house platforms in World 7.
 ;
-CreateObject_JumpthroughPlatform:
+CreateObject_JumpThroughPlatform:
 	LDA CurrentWorldTileset
 	CMP #$06
-	BNE CreateObject_GreenJumpthroughPlatform
+	BNE CreateObject_GreenJumpThroughPlatform
 
-	JMP CreateObject_MushroomJumpthroughPlatform
+	JMP CreateObject_MushroomJumpThroughPlatform
 ELSE
 CreateObject_Platform_CX:
 	LDA LevelObjectMode
 	JSR JumpToTableAfterJump
 
-	.dw CreateObject_GreenJumpthroughPlatform
-	.dw CreateObject_GreenJumpthroughPlatform
+	.dw CreateObject_GreenJumpThroughPlatform
+	.dw CreateObject_GreenJumpThroughPlatform
 	.dw CreateObject_Whale
-	.dw CreateObject_MushroomJumpthroughPlatform
+	.dw CreateObject_MushroomJumpThroughPlatform
 ENDIF
 
 
@@ -812,11 +812,11 @@ ENDIF
 ; - `byte_RAM_E8`: area page
 ; - `byte_RAM_50D`: width of platform
 ;
-CreateObject_GreenJumpthroughPlatform:
+CreateObject_GreenJumpThroughPlatform:
 	; Start with a top-left tile.
 	LDX #$00
 
-CreateObject_GreenJumpthroughPlatform_Row:
+CreateObject_GreenJumpThroughPlatform_Row:
 	STX byte_RAM_B
 	; Update the area page.
 	LDX byte_RAM_E8
@@ -831,41 +831,41 @@ CreateObject_GreenJumpthroughPlatform_Row:
 	LDY byte_RAM_E7
 	LDA byte_RAM_50D
 	STA byte_RAM_7
-	JSR CreateObject_GreenJumpthroughPlatformTile
+	JSR CreateObject_GreenJumpThroughPlatformTile
 
 	; Skip to the right side if we're drawing a short platform.
 	INX
 	LDA byte_RAM_7
-	BEQ CreateObject_GreenJumpthroughPlatform_Right
+	BEQ CreateObject_GreenJumpThroughPlatform_Right
 
 	; Draw top or middle tiles.
-CreateObject_GreenJumpthroughPlatform_Loop:
+CreateObject_GreenJumpThroughPlatform_Loop:
 	JSR IncrementAreaXOffset
 
-	JSR CreateObject_GreenJumpthroughPlatformTile
+	JSR CreateObject_GreenJumpThroughPlatformTile
 
-	BNE CreateObject_GreenJumpthroughPlatform_Loop
+	BNE CreateObject_GreenJumpThroughPlatform_Loop
 
 	; Draw right corner or side.
-CreateObject_GreenJumpthroughPlatform_Right:
+CreateObject_GreenJumpThroughPlatform_Right:
 	JSR IncrementAreaXOffset
 
 	INX
-	JSR CreateObject_GreenJumpthroughPlatformTile
+	JSR CreateObject_GreenJumpThroughPlatformTile
 
 	; Exit if we've hit the bottom of the page.
 	LDA byte_RAM_E7
 	CLC
 	ADC #$10
 	CMP #$F0
-	BCS CreateObject_GreenJumpthroughPlatform_Exit
+	BCS CreateObject_GreenJumpThroughPlatform_Exit
 
 	; Drawing a left side tile next.
 	LDX #$03
 	STA byte_RAM_E7
-	JMP CreateObject_GreenJumpthroughPlatform_Row
+	JMP CreateObject_GreenJumpThroughPlatform_Row
 
-CreateObject_GreenJumpthroughPlatform_Exit:
+CreateObject_GreenJumpThroughPlatform_Exit:
 	RTS
 
 
@@ -898,74 +898,74 @@ GreenPlatformOverlapRightTiles:
 ; - `X`: offset in `GreenPlatformTiles` table (0-2=top, 3-5=middle)
 ; - `Y`: raw data offset
 ;
-CreateObject_GreenJumpthroughPlatformTile:
+CreateObject_GreenJumpThroughPlatformTile:
 	STX byte_RAM_8
 	TXA
-	BNE CreateObject_GreenJumpthroughPlatformTile_NotTopLeft
+	BNE CreateObject_GreenJumpThroughPlatformTile_NotTopLeft
 
 	; Check if the top left corner requires a special tile
 	LDX #(GreenPlatformOverlapLeftTiles - GreenPlatformOverlapCompareTiles - 1)
 	LDA (byte_RAM_1), Y
 
-CreateObject_GreenJumpthroughPlatformTile_TopLeftLoop:
+CreateObject_GreenJumpThroughPlatformTile_TopLeftLoop:
 	CMP GreenPlatformOverlapCompareTiles, X
-	BEQ CreateObject_GreenJumpthroughPlatformTile_TopLeftMatch
+	BEQ CreateObject_GreenJumpThroughPlatformTile_TopLeftMatch
 
 	DEX
-	BPL CreateObject_GreenJumpthroughPlatformTile_TopLeftLoop
+	BPL CreateObject_GreenJumpThroughPlatformTile_TopLeftLoop
 
-	BMI CreateObject_GreenJumpthroughPlatformTile_CheckOverwrite
+	BMI CreateObject_GreenJumpThroughPlatformTile_CheckOverwrite
 
-CreateObject_GreenJumpthroughPlatformTile_TopLeftMatch:
+CreateObject_GreenJumpThroughPlatformTile_TopLeftMatch:
 	LDA GreenPlatformOverlapLeftTiles, X
-	BNE CreateObject_GreenJumpthroughPlatformTile_SetTile
+	BNE CreateObject_GreenJumpThroughPlatformTile_SetTile
 
-CreateObject_GreenJumpthroughPlatformTile_NotTopLeft:
+CreateObject_GreenJumpThroughPlatformTile_NotTopLeft:
 	LDX byte_RAM_8
 	CPX #$02
-	BNE CreateObject_GreenJumpthroughPlatformTile_CheckOverwrite
+	BNE CreateObject_GreenJumpThroughPlatformTile_CheckOverwrite
 
 	; Check if the top right corner requires a special tile
 	LDX #(GreenPlatformOverlapLeftTiles - GreenPlatformOverlapCompareTiles - 1)
 	LDA (byte_RAM_1), Y
 
-CreateObject_GreenJumpthroughPlatformTile_TopRightLoop:
+CreateObject_GreenJumpThroughPlatformTile_TopRightLoop:
 	CMP GreenPlatformOverlapCompareTiles, X
-	BEQ CreateObject_GreenJumpthroughPlatformTile_TopRightMatch
+	BEQ CreateObject_GreenJumpThroughPlatformTile_TopRightMatch
 
 	DEX
-	BPL CreateObject_GreenJumpthroughPlatformTile_TopRightLoop
+	BPL CreateObject_GreenJumpThroughPlatformTile_TopRightLoop
 
-	BMI CreateObject_GreenJumpthroughPlatformTile_CheckOverwrite
+	BMI CreateObject_GreenJumpThroughPlatformTile_CheckOverwrite
 
-CreateObject_GreenJumpthroughPlatformTile_TopRightMatch:
+CreateObject_GreenJumpThroughPlatformTile_TopRightMatch:
 	LDA GreenPlatformOverlapRightTiles, X
-	BNE CreateObject_GreenJumpthroughPlatformTile_SetTile
+	BNE CreateObject_GreenJumpThroughPlatformTile_SetTile
 
 	; Check if the target tile can be overwritten by a green platform
-CreateObject_GreenJumpthroughPlatformTile_CheckOverwrite:
+CreateObject_GreenJumpThroughPlatformTile_CheckOverwrite:
 	LDX #(GreenPlatformTiles_End - GreenPlatformTiles - 1)
 
-CreateObject_GreenJumpthroughPlatformTile_CheckOverwriteLoop:
+CreateObject_GreenJumpThroughPlatformTile_CheckOverwriteLoop:
 	LDA (byte_RAM_1), Y
 	CMP GreenPlatformTiles, X
-	BEQ CreateObject_GreenJumpthroughPlatformTile_Overwrite
+	BEQ CreateObject_GreenJumpThroughPlatformTile_Overwrite
 
 	DEX
-	BPL CreateObject_GreenJumpthroughPlatformTile_CheckOverwriteLoop
+	BPL CreateObject_GreenJumpThroughPlatformTile_CheckOverwriteLoop
 
 	; Otherwise, we cannot overwrite this tile with a green platform.
 	LDX byte_RAM_8
-	JMP CreateObject_GreenJumpthroughPlatformTile_Exit
+	JMP CreateObject_GreenJumpThroughPlatformTile_Exit
 
-CreateObject_GreenJumpthroughPlatformTile_Overwrite:
+CreateObject_GreenJumpThroughPlatformTile_Overwrite:
 	LDX byte_RAM_8
 	LDA GreenPlatformTiles, X
 
-CreateObject_GreenJumpthroughPlatformTile_SetTile:
+CreateObject_GreenJumpThroughPlatformTile_SetTile:
 	STA (byte_RAM_1), Y
 
-CreateObject_GreenJumpthroughPlatformTile_Exit:
+CreateObject_GreenJumpThroughPlatformTile_Exit:
 	LDX byte_RAM_8
 	DEC byte_RAM_7
 	RTS
@@ -1568,7 +1568,7 @@ CreateObject_StarBackground_Loop:
 ;
 ; Lookup table for whale tiles.
 ;
-; It's unclear why there are entries for black background tiles and jumpthrough
+; It's unclear why there are entries for black background tiles and JumpThrough
 ; cloud platforms, but the mushroom houses table also has this.
 ;
 WhaleLeftTiles:
@@ -2086,7 +2086,7 @@ CreateObject_Door_Exit:
 ;
 ; Lookup table for World 7 mushroom house tiles.
 ;
-; Interestingly, there are entries for black background tiles and jumpthrough
+; Interestingly, there are entries for black background tiles and JumpThrough
 ; cloud platforms in this table as well, although they are never used. Perhaps
 ; these houses would have included their own base at some point.
 ;
@@ -2147,7 +2147,7 @@ CreateObject_MushroomHouseRow_Right:
 ;
 ; Draws the jump-through mushroom house platforms used in World 7
 ;
-CreateObject_MushroomJumpthroughPlatform:
+CreateObject_MushroomJumpThroughPlatform:
 	LDA byte_RAM_50D
 	STA byte_RAM_7
 	LDA #$0C
@@ -2155,7 +2155,7 @@ CreateObject_MushroomJumpthroughPlatform:
 	; Draw roof of mushroom house
 	JSR CreateObject_MushroomHouseRow
 
-CreateObject_MushroomJumpthroughPlatform_Loop:
+CreateObject_MushroomJumpThroughPlatform_Loop:
 	LDA byte_RAM_E7
 	CLC
 	ADC #$10
@@ -2171,16 +2171,16 @@ CreateObject_MushroomJumpthroughPlatform_Loop:
 	LDY byte_RAM_E7
 	LDA (byte_RAM_1), Y
 	CMP #BackgroundTile_Sky
-	BNE CreateObject_MushroomJumpthroughPlatform_Exit
+	BNE CreateObject_MushroomJumpThroughPlatform_Exit
 
 	; Draw body of mushroom house
 	JSR CreateObject_MushroomHouseRow
 
 	LDA byte_RAM_E7
 	CMP #$E0
-	BCC CreateObject_MushroomJumpthroughPlatform_Loop
+	BCC CreateObject_MushroomJumpThroughPlatform_Loop
 
-CreateObject_MushroomJumpthroughPlatform_Exit:
+CreateObject_MushroomJumpThroughPlatform_Exit:
 	RTS
 
 

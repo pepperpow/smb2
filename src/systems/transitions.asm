@@ -114,6 +114,7 @@ AreaTransitionPlacement_Randomizer:
 +next
 	LDA TransitionType
 	CMP #TransitionType_Vine
+	BNE +next
 	JSR AreaTransitionPlacement_Climbing
 	LDA PlayerAnimationFrame
 	CMP #SpriteAnimation_Climbing
@@ -158,6 +159,7 @@ AreaTransitionPlacement_Randomizer:
 	BEQ +end
 +climbSet
 	LDA IsHorizontalLevel
+	EOR #$01
 	BEQ +
 	LDA CurrentLevelEntryPage
 +   STA PlayerYHi

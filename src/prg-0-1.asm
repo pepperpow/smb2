@@ -3209,34 +3209,34 @@ loc_BANK0_8ED8:
 
 
 ;
-; Jumpthrough collision results
+; JumpThrough collision results
 ;
-; This table determines per direction whether a tile is solid (for jumpthrough
+; This table determines per direction whether a tile is solid (for JumpThrough
 ; blocks) or interactive (for spikes/ice/conveyors)
 ;
 ;   $01 = true
 ;   $02 = false
 ;
-JumpthroughTileCollisionTable:
+JumpThroughTileCollisionTable:
 InteractiveTileCollisionTable:
-	.db $02 ; jumpthrough bottom (y-velocity < 0)
+	.db $02 ; JumpThrough bottom (y-velocity < 0)
 	.db $02
-	.db $01 ; jumpthrough top (y-velocity > 0)
+	.db $01 ; JumpThrough top (y-velocity > 0)
 	.db $01
-	.db $02 ; jumpthrough right (x-velocity < 0)
+	.db $02 ; JumpThrough right (x-velocity < 0)
 	.db $02
-	.db $02 ; jumpthrough left (x-velocity > 0)
+	.db $02 ; JumpThrough left (x-velocity > 0)
 	.db $02
 
 IFDEF ENABLE_TILE_ATTRIBUTES_TABLE
 CheckPlayerTileCollisionAttributesTable:
-	.db %00001000 ; jumpthrough bottom (y-velocity < 0)
+	.db %00001000 ; JumpThrough bottom (y-velocity < 0)
 	.db %00001000
-	.db %00000100 ; jumpthrough top (y-velocity > 0)
+	.db %00000100 ; JumpThrough top (y-velocity > 0)
 	.db %00000100
-	.db %00000010 ; jumpthrough right (x-velocity < 0)
+	.db %00000010 ; JumpThrough right (x-velocity < 0)
 	.db %00000010
-	.db %00000001 ; jumpthrough left (x-velocity > 0)
+	.db %00000001 ; JumpThrough left (x-velocity > 0)
 	.db %00000001
 ENDIF
 
@@ -3459,7 +3459,7 @@ CheckPlayerTileCollision:
 	JSR sub_BANK0_924F
 
 	LDX byte_RAM_7
-	LDY JumpthroughTileCollisionTable, X
+	LDY JumpThroughTileCollisionTable, X
 	LDA byte_RAM_0
 
 	JSR CheckTileUsesCollisionType
@@ -3724,7 +3724,7 @@ PlayerTileCollision_Climbable_Exit:
 ;
 ; Input
 ;   A = tile ID
-;   Y = collision handler type (0 = solid for mushroom blocks, 1 = jumpthrough, 2 = solid)
+;   Y = collision handler type (0 = solid for mushroom blocks, 1 = JumpThrough, 2 = solid)
 ; Output
 ;   C = whether or not collision type Y is relevant
 ;
