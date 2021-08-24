@@ -1,4 +1,8 @@
 ;
+IFDEF RANDOMIZER_FLAGS
+.include "src/extras/player/jump-attack.asm"
+ENDIF
+
 ; Object/background collision that treats non-sky background tiles as solid,
 ; such as for Sparks and Mushroom Blocks
 ;
@@ -1626,6 +1630,3 @@ loc_BANK3_BC1B:
 
 locret_BANK3_BC1E:
 	RTS
-
-
-;

@@ -2508,8 +2508,8 @@ PlayerControlAcceleration:
 ; player crouch subroutine
 sub_BANK0_8C1A:
 	JSR PlayerWalkJumpAnim
-IFDEF CUSTOM_MUSH
-	.include "src/extras/jump-routine-bonus.asm"
+IFDEF RANDOMIZER_FLAGS
+	JSR Player_GroundPound
 ENDIF
 
 	LDA PlayerInAir
@@ -3378,7 +3378,7 @@ PlayerTileCollision_CheckJar:
 	JSR TileBehavior_CheckJar
 
 PlayerTileCollision_CheckDamageTile:
-IFDEF CUSTOM_MUSH
+IFDEF RANDOMIZER_FLAGS
     JSR Player_GroundPoundHit
 ENDIF
 	LDA #$00
@@ -5342,8 +5342,62 @@ IFDEF MIGRATE_QUADS
 .include "src/systems/tile_quads.asm"
 ENDIF
 
-IFDEF CUSTOM_MUSH
-.include "src/extras/player-mods.asm"
-.include "src/extras/draw-inventory.asm"
+IFDEF RANDOMIZER_FLAGS
+Player_GroundPound:
+    LDA Player1JoypadHeld
+    AND #ControllerInput_Down
+    BEQ +o
+    LDX CurrentCharacter
+    LDA DokiMode, X
+    AND #CustomCharFlag_GroundPound
+    BEQ +
+    LDA PlayerYVelocity
+    BMI +
+    CMP #$3F
+    BCS ++
+    INC PlayerYVelocity
+    INC PlayerYVelocity
+    JMP +
+++
+    LDA CrushTimer
+    CMP #$24
+    BCS ++
+    INC CrushTimer
+    LDA #$8
+    CMP CrushTimer
+    BCS +
+    LDA #SpriteAnimation_Climbing+1
+    STA PlayerAnimationFrame
+    JMP +
+++
+    LDA StarInvincibilityTimer
+    BNE +
+    LDA #$4
+    STA StarInvincibilityTimer
++   RTS
++o  LDA #$0
+    STA CrushTimer
+    RTS
+
+Player_GroundPoundHit:
+    LDA PlayerYVelocity
+    BMI +
+    CMP #$3F
+    BCC +
+    LDA CrushTimer
+    CMP #$24
+    BCC +
+    LDX CurrentCharacter
+    LDA DokiMode, X
+    AND #CustomCharFlag_GroundPound
+    BEQ +
+    LDA #$20
+    STA POWQuakeTimer
+	LDA #SoundEffect3_Rumble_B
+	STA SoundEffectQueue3
++
+    LDA #$0
+    STA CrushTimer
+    RTS
 ENDIF
 

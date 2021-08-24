@@ -121,7 +121,7 @@ FunkyLittleSeedBlock7:
 	;                  (C)  111  999  888  888
 	.db $22, $E7, $05, $F8, $D1, $D9, $D8, $D8  ; (C) 1988
 
-	.db $22, $EC, $05, $F4, $D2, $D0, $D1, $D9  ; (C) 1988
+	.db $22, $EC, $05, $F4, $D2, $D0, $D2, $D1  ; (C) 2021
 
 	; NINTENDO
 	;                  NNN  III  NNN  TTT  EEE  NNN  DDD  OOO

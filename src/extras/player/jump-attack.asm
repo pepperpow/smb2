@@ -1,4 +1,5 @@
 JumpAttack:
+    LDX CurrentCharacter
     LDA PlayerYVelocity
     BMI +
     CMP #$10
@@ -52,58 +53,3 @@ JumpAttack:
     RTS
 +
     RTS
-
-; Player_GroundPound:
-;     LDA Player1JoypadHeld
-;     AND #ControllerInput_Down
-;     BEQ +o
-;     LDX #CustomBitFlag_GroundPound
-;     JSR ChkFlagPlayer3
-;     BNE +
-;     LDA PlayerYVelocity
-;     BMI +
-;     CMP #$3F
-;     BCS ++
-;     INC PlayerYVelocity
-;     INC PlayerYVelocity
-;     JMP +
-; ++
-;     LDA CrushTimer
-;     CMP #$24
-;     BCS ++
-;     INC CrushTimer
-;     LDA #$8
-;     CMP CrushTimer
-;     BCS +
-;     LDA #SpriteAnimation_CustomFrame1
-;     STA PlayerAnimationFrame
-;     JMP +
-; ++
-;     LDA StarInvincibilityTimer
-;     BNE +
-;     LDA #$4
-;     STA StarInvincibilityTimer
-; +   RTS
-; +o  LDA #$0
-;     STA CrushTimer
-;     RTS
-
-; Player_GroundPoundHit:
-;     LDA PlayerYVelocity
-;     BMI +
-;     CMP #$3F
-;     BCC +
-;     LDA CrushTimer
-;     CMP #$24
-;     BCC +
-;     LDX #CustomBitFlag_GroundPound
-;     JSR ChkFlagPlayer3
-;     BNE +
-;     LDA #$20
-;     STA POWQuakeTimer
-; 	LDA #SoundEffect3_Rumble_B
-; 	STA SoundEffectQueue3
-; +
-;     LDA #$0
-;     STA CrushTimer
-;     RTS

@@ -295,6 +295,21 @@ MarioDream_WriteBubbleSprites:
 	BNE MarioDream_WriteBubbleSprites_Frame2
 
 MarioDream_WriteBubbleSprites_Frame1:
+IFDEF RANDOMIZER_FLAGS
+-   TYA
+    LSR
+    LSR
+    TAX
+    LDA CharLookupTable_Ordered_Dream, X  
+    AND CharacterLock_Variable
+    BEQ +
+    LDA #$FF 
+	STA SpriteDMAArea + $10, Y
+    DEY
+    BPL -
+    RTS 
++
+ENDIF
 	LDA MarioDream_BubbleSprites, Y
 	STA SpriteDMAArea, Y
 	DEY
@@ -305,6 +320,26 @@ MarioDream_WriteBubbleSprites_Frame1:
 ; ---------------------------------------------------------------------------
 
 MarioDream_WriteBubbleSprites_Frame2:
+IFDEF RANDOMIZER_FLAGS
+-   TYA
+    LSR
+    LSR
+    TAX
+    LDA CharLookupTable_Ordered_Dream, X  
+    AND CharacterLock_Variable
+    BEQ +
+    LDA #$FF 
+	STA SpriteDMAArea + $10, Y
+    DEY
+    BPL -
+    RTS 
+CharLookupTable_Ordered_Dream:
+	.db $01 ; Mio 
+	.db $02 ; Lug 
+	.db $08 ; Pch 
+	.db $04 ; Tod 
++
+ENDIF
 	LDA MarioDream_BubbleSprites2, Y
 	STA SpriteDMAArea, Y
 	DEY

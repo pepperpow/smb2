@@ -350,57 +350,6 @@ CustomBeh_Flag2:
     RTS
 
 
-
-; CustomPalette:
-; 	.db $0F,$01,$16,$27
-; 	.db $0F,$06,$25,$36
-; 	.db $0F,$01,$30,$27
-; 	.db $0F,$01,$2A,$36
-
-; RptPaletteCustom:
-;       RTS
-;       LDY #0
-;   -
-;       LDA     CustomPalette,X
-;       STA     RestorePlayerPalette0,Y
-;       INX
-;       INY
-;       CPY     #4
-;       BNE     -
-;       LDA SkyFlashTimer
-;       BNE +
-;       INC     SkyFlashTimer
-; +
-;       RTS
-
-
-;RptPalette:
-;    LDA $4+4
-;    STA PPUBuffer_55F - 1
-;    LDA #$3F
-;    STA PPUBuffer_55F + 0
-;    LDA #$11
-;    STA PPUBuffer_55F + 1
-;    LDA #$4
-;    STA PPUBuffer_55F + 2
-;    LDY #0
-;    INX
-;-
-;    LDA     MarioPalette,X
-;	STA PPUBuffer_55F + 3, Y ; ...and store it in the buffer
-;    INX
-;    INY
-;    CPY     #3
-;    BNE     -
-;    LDA #$0
-;    STA PPUBuffer_55F + 3, Y
-;	LDA #ScreenUpdateBuffer_RAM_55F
-;	STA ScreenUpdateIndex
-;    JSR WaitForNMI
-;    JSR WaitForNMI
-;    JSR WaitForNMI
-;    RTS
-
 ; IFDEF PLAYER_STUFF
 ; ;; appearances
 ProcessCustomPowerup_WithRemove:
@@ -675,3 +624,93 @@ CustomObject_PowerItem_NoChrSwitch:
     STA SpriteTableCustom1 + 1, Y
     RTS
 ;ENDIF
+
+; Flag Set
+; Takes PTR, 
+
+HeldOffset:
+    .db $0
+    .db $0
+    .db $0
+    .db $0
+    .db $0
+    .db $0
+    .db $0
+    .db $0
+AccelReduction:
+    .db $0
+    .db $0
+    .db $0
+    .db $0
+    .db $0
+    .db $0
+    .db $0
+    .db $0
+MaxedHealth:
+    .db $ff  ;; maxed health
+StartingInventory:
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db %0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+StartingEquipment:
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+StartingProjectile:
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+StartingHold:
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+    .db $0  ;; select death
+
+
+CustomBeh_UnlockM:
+    LDA #$0F ^ #%0001
+    LDX #0
+    JMP CustomBeh_Unlock
+CustomBeh_UnlockP:
+    LDA #$0F ^ #%1000
+    LDX #1
+    JMP CustomBeh_Unlock
+CustomBeh_UnlockT:
+    LDA #$0F ^ #%0100 ; their respective slot
+    LDX #2
+    JMP CustomBeh_Unlock
+CustomBeh_UnlockL:
+    LDA #$0F ^ #%0010
+    LDX #3
+    JMP CustomBeh_Unlock
+
+CustomBeh_Unlock:
+    AND CharacterLock_Variable
+    CMP CharacterLock_Variable
+    BEQ +++
+    STA CharacterLock_Variable
+    LDA IndependentLives
+    BEQ +
+    LDA ContinueGame + 1 ;; lives
+    CMP PlayerIndependentLives, X
+    BCC ++
+    STA PlayerIndependentLives, X
+    JMP ++
++   LDA ContinueGame + 1 ;; lives
+    CMP PlayerIndependentLives, X
+    BCC ++
+    STA PlayerIndependentLives, X
+++
+    JSR PlayMushGet
++++
+    RTS

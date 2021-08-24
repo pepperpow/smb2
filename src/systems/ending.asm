@@ -851,7 +851,7 @@ ContributorScene_SpriteZeroLoop:
 
 	LDY #$3F
 ContributorScene_CharacterLoop:
-IFNDEF TEST_FLAG
+IFNDEF CUSTOM_PLAYER_RENDER
 	LDA ContributorCharacterOAMData, Y
 	STA SpriteDMAArea + $10, Y
 	DEY
@@ -1329,6 +1329,16 @@ loc_BANK1_ACD6:
 
 
 ContributorAnimationTiles:
+IFDEF CUSTOM_PLAYER_RENDER
+ContributorAnimationTiles_Mario:
+	.db $00 ,$20 ,$02 ,$22 ,$04 ,$24 ,$06 ,$26
+ContributorAnimationTiles_Luigi:
+	.db $08 ,$28 ,$0a ,$2a ,$0c ,$2c ,$0e ,$2e
+ContributorAnimationTiles_Toad:
+	.db $10 ,$30 ,$12 ,$32 ,$14 ,$34 ,$16 ,$36
+ContributorAnimationTiles_Princess:
+	.db $18 ,$38 ,$1a ,$3a ,$1c ,$3c ,$1e ,$3e
+ELSE
 ContributorAnimationTiles_Mario:
 	.db $61
 	.db $61
@@ -1365,6 +1375,7 @@ ContributorAnimationTiles_Princess:
 	.db $8F
 	.db $91
 	.db $91
+ENDIF
 
 ContributorAnimationTilesOffset:
 	.db (ContributorAnimationTiles_Mario - ContributorAnimationTiles + 6)

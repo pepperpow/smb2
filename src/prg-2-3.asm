@@ -8214,8 +8214,3 @@ IFDEF CONTROLLER_2_DEBUG
 .include "src/extras/debug/controller-2-3-debug.asm"
 ENDIF
 
-IFDEF RANDOMIZER_FLAGS
-.include "src/extras/player/jump-attack.asm"
-ENDIF
-
-

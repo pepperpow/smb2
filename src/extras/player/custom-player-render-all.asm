@@ -18,9 +18,9 @@ CharacterFrameEyeTiles:
 ; Specific to each character
 CharacterEyeTiles:
 	.db $D5 ; Mario
-	.db $D9 ; Luigi
+	.db $D9 ; Princess
 	.db $FB ; Toad
-	.db $D7 ; Princess
+	.db $D7 ; Luigi
 
 DamageInvulnBlinkFrames:
 	.db $01, $01, $01, $02, $02, $04, $04, $04

@@ -1315,9 +1315,9 @@ PauseScreenExitCheck:
 	AND #$01
 	CLC
 	ADC #$0D ; Will use either $0D or $0E from the update index pointers
-;IFDEF CUSTOM_MUSH
-;	LDA #$0
-;ENDIF
+; IFDEF PAUSE_SCREEN
+	; LDA #$0
+; ENDIF
 	STA ScreenUpdateIndex ; @TODO I assume this is what blinks "PAUSE"
 	JMP PauseScreenLoop
 
@@ -2315,7 +2315,7 @@ PauseScreen_Card_ScreenReset:
 	STA ScreenUpdateIndex
 	JSR WaitForNMI
 
-IFDEF CUSTOM_MUSH
+IFDEF PAUSE_SCREEN
 	JSR TestMyDraw
 ENDIF
 
@@ -2384,16 +2384,8 @@ sub_BANKF_EA68:
 
 ; End of function sub_BANKF_EA68
 
-IFDEF FLAG_SYSTEM
-	.include "src/extras/flag-set.asm"
-ENDIF
-
-IFDEF CUSTOM_MUSH
-	.include "src/extras/player-stuff.asm"
-ENDIF
-
 IFDEF CHAR_SWITCH
-.include "src/extras/player/char_switch_f.asm"
+	.include "src/extras/player/char_switch_f.asm"
 ENDIF
 
 ;
@@ -5405,7 +5397,6 @@ ELSE ; INES_MAPPER == MAPPER_MMC3
 	PLA
 	STA $8001 ; Change second bank
 	RTS
-
 ENDIF
 
 

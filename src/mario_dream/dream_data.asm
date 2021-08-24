@@ -144,6 +144,7 @@ MarioDream_EraseBubble5:
 	.db $21, $F6, $42, $FC
 	.db $00
 
+IFDEF RANDOMIZER_FLAGS
 MarioDream_BubbleSprites:
 	.db $28, $00, $00, $A8
 	.db $28, $04, $01, $B0
@@ -155,6 +156,19 @@ MarioDream_BubbleSprites2:
 	.db $28, $06, $01, $B0
 	.db $28, $0A, $02, $C0
 	.db $28, $0E, $03, $B8
+ELSE
+MarioDream_BubbleSprites:
+	.db $28, $00, $00, $A8
+	.db $28, $04, $01, $B0
+	.db $28, $08, $02, $C0
+	.db $28, $0C, $03, $B8
+
+MarioDream_BubbleSprites2:
+	.db $28, $02, $00, $A8
+	.db $28, $06, $01, $B0
+	.db $28, $0A, $02, $C0
+	.db $28, $0E, $03, $B8
+ENDIF
 
 MarioDream_SnoringFrameCounts:
 	.db $20
